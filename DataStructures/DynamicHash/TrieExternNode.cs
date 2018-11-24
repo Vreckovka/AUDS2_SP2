@@ -9,11 +9,14 @@ namespace DataStructures.DynamicHash
     class TrieExternNode : Node
     {
         public long BlockOffset { get; set; }
-        public TrieInternNode Parent { get; set; }
-        public TrieExternNode(long blockOffset, TrieInternNode parent)
+        public bool IsLeft { get; set; }
+        public int ValidCount { get; set; }
+        public TrieExternNode(long blockOffset,int validCount, TrieInternNode parent, bool isLeft)
         {
             BlockOffset = blockOffset;
             Parent = parent;
-        }    
+            IsLeft = isLeft;
+            ValidCount = validCount;
+        }
     }
 }

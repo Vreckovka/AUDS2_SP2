@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,22 +32,47 @@ namespace DynamicHash_Tester
             InitializeComponent();
 
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
-            int count = 10;
+            int count = 2;
             stopwatch.Reset();
             stopwatch.Start();
+
+
             for (int i = 0; i < count; i++)
             {
                 RandomInsert();
             }
+
+
             stopwatch.Stop();
+            DrawBlocksSequentionally();
+
+            //RandomOperation();
+            Thread thread = new Thread(RandomOperation);
+            thread.Start();
+
 
             Console.WriteLine($"Added {count:N0} in: {stopwatch.Elapsed}");
-           
 
-            Console.WriteLine(dynamicHash.Delete(nehnutelnosts[8]));
-            Console.WriteLine(dynamicHash.Delete(nehnutelnosts[9]));
+            RandomInsert();
 
-            DrawBlocksSequentionally();
+
+        }
+
+        public void RandomOperation()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                RandomInsert();
+                if (random.Next(0, 100) > 50)
+                    RandomDelete();
+
+               
+
+                Dispatcher.Invoke(() => Canvas_Main.Children.Clear());
+                DrawBlocksSequentionally();
+
+                Thread.Sleep(2000);
+            }
         }
 
         private static string[] mesta = new string[]
@@ -60,6 +86,13 @@ namespace DynamicHash_Tester
             nehnutelnosts.Add(nehnutelnost);
         }
 
+        public static void RandomDelete()
+        {
+            int index = random.Next(0, nehnutelnosts.Count);
+            dynamicHash.Delete(nehnutelnosts[index]);
+            nehnutelnosts.Remove(nehnutelnosts[index]);
+        }
+
         public void DrawBlocksSequentionally()
         {
             var queue = dynamicHash.GetBlocksSequentionally();
@@ -71,55 +104,73 @@ namespace DynamicHash_Tester
 
         private void DrawBlock(Block<Nehnutelnost> nehnutelnosts)
         {
-            GroupBox block = new GroupBox() { Header = $"Offset: {nehnutelnosts.Offset}" };
-
-            StackPanel stackPanelBlock = new StackPanel();
-            GroupBox header = new GroupBox() { Header = $"Header of block" };
-
-            GroupBox items = new GroupBox() { Header = $"Items" };
-            stackPanelBlock.Children.Add(header);
-            stackPanelBlock.Children.Add(items);
-
-
-            StackPanel stackPanelHeader = new StackPanel();
-            stackPanelHeader.Children.Add(new TextBlock { Text = $"Valid count: {nehnutelnosts.ValidCount}" });
-            stackPanelHeader.Children.Add(new TextBlock { Text = $"Offset of next: {nehnutelnosts.NextOffset}" });
-            stackPanelHeader.Children.Add(new TextBlock { Text = $"Chain size: {nehnutelnosts.SizeOfChain}" });
-            stackPanelHeader.Children.Add(new TextBlock { Text = $"Valid count of chain: {nehnutelnosts.ValidCountOfChain}" });
-            header.Content = stackPanelHeader;
-
-            StackPanel stackPanel = new StackPanel();
-
-            block.BorderThickness = new Thickness(2);
-            block.BorderBrush = Brushes.Red;
-            block.Margin = new Thickness(5);
-
-            items.BorderBrush = Brushes.Black;
-            header.BorderBrush = Brushes.Black;
-            header.BorderThickness = new Thickness(2);
-
-
-            foreach (Nehnutelnost nehnutelnost in nehnutelnosts.Records)
+            Dispatcher.Invoke(() =>
             {
-                StackPanel nehnutelnostStackPanel = new StackPanel();
-                TextBlock id = new TextBlock() { Text = $"Id: {nehnutelnost.Id.ToString()}" };
-                TextBlock supisneCislo = new TextBlock() { Text = $"Supisne cislo: {nehnutelnost.SupisneCislo}" };
-                TextBlock nazovKatastra = new TextBlock() { Text = $"Nazov katastra: {nehnutelnost.NazovKatastra}" };
-                TextBlock popis = new TextBlock() { Text = $"Popis: {nehnutelnost.Popis}" };
+                GroupBox block = new GroupBox() { Header = $"Offset: {nehnutelnosts.Offset}" };
 
-                nehnutelnostStackPanel.Children.Add(id);
-                nehnutelnostStackPanel.Children.Add(supisneCislo);
-                nehnutelnostStackPanel.Children.Add(nazovKatastra);
-                nehnutelnostStackPanel.Children.Add(popis);
-                nehnutelnostStackPanel.Children.Add(new Separator());
+                var converter = new System.Windows.Media.BrushConverter();
+                var brush = (Brush)converter.ConvertFromString("#7FEEEEEE");
 
-                stackPanel.Children.Add(nehnutelnostStackPanel);
-            }
+                block.Background = brush;
 
-            items.Content = stackPanel;
+                StackPanel stackPanelBlock = new StackPanel();
+                GroupBox header = new GroupBox() { Header = $"Header of block" };
 
-            block.Content = stackPanelBlock;
-            Canvas_Main.Children.Add(block);
+
+                GroupBox items = new GroupBox() { Header = $"Items" };
+                stackPanelBlock.Children.Add(header);
+                stackPanelBlock.Children.Add(items);
+
+
+                StackPanel stackPanelHeader = new StackPanel();
+                stackPanelHeader.Children.Add(new TextBlock { Text = $"Valid count: {nehnutelnosts.ValidCount}" });
+                stackPanelHeader.Children.Add(new TextBlock { Text = $"Offset of next: {nehnutelnosts.NextOffset}" });
+                stackPanelHeader.Children.Add(new TextBlock { Text = $"Chain size: {nehnutelnosts.SizeOfChain}" });
+                stackPanelHeader.Children.Add(new TextBlock
+                { Text = $"Valid count of chain: {nehnutelnosts.ValidCountOfChain}" });
+                header.Content = stackPanelHeader;
+
+                StackPanel stackPanel = new StackPanel();
+
+                block.BorderThickness = new Thickness(2);
+                block.BorderBrush = Brushes.Red;
+                block.Margin = new Thickness(5);
+
+                items.BorderBrush = Brushes.Black;
+                header.BorderBrush = Brushes.Black;
+                header.BorderThickness = new Thickness(2);
+
+
+                foreach (Nehnutelnost nehnutelnost in nehnutelnosts.Records)
+                {
+                    StackPanel nehnutelnostStackPanel = new StackPanel();
+                    TextBlock id = new TextBlock() { Text = $"Id: {nehnutelnost.Id.ToString()}" };
+                    TextBlock supisneCislo = new TextBlock() { Text = $"Supisne cislo: {nehnutelnost.SupisneCislo}" };
+                    TextBlock nazovKatastra = new TextBlock() { Text = $"Nazov katastra: {nehnutelnost.NazovKatastra}" };
+                    TextBlock popis = new TextBlock() { Text = $"Popis: {nehnutelnost.Popis}" };
+
+                    nehnutelnostStackPanel.Children.Add(id);
+                    nehnutelnostStackPanel.Children.Add(supisneCislo);
+                    nehnutelnostStackPanel.Children.Add(nazovKatastra);
+                    nehnutelnostStackPanel.Children.Add(popis);
+                    nehnutelnostStackPanel.Children.Add(new Separator());
+
+                    stackPanel.Children.Add(nehnutelnostStackPanel);
+                }
+
+                items.Content = stackPanel;
+                block.Content = stackPanelBlock;
+
+                if (dynamicHash._freeBlocks.Contains(nehnutelnosts.Offset))
+                {
+                    block.Background = (Brush)converter.ConvertFromString("#66FF8181");
+                    header.BorderThickness = new Thickness(0);
+                    items.BorderThickness = new Thickness(0);
+                }
+
+
+                Canvas_Main.Children.Add(block);
+            });
         }
     }
 }

@@ -128,6 +128,7 @@ namespace DataStructures.DynamicHash
             if (najdene != null && najdene.Equals(key))
             {
                 ValidCount--;
+
                 Records.Remove(key);
                 //TODO: Vymazat prazdny block
                 if (ValidCount == 0)
