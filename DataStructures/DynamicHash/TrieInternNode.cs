@@ -11,5 +11,17 @@ namespace DataStructures.DynamicHash
         public Node Left { get; set; }
         public Node Right { get; set; }
 
+
+        public override void VypisNode()
+        {
+            Console.WriteLine($"TRIE INTERN:\n" +
+                              $"Block offset {Left}\n" +
+                              $"Valid count {Right}\n");
+        }
+
+        public override string ToString()
+        {
+            return "TrieInternNode";
+        }
     }
 }

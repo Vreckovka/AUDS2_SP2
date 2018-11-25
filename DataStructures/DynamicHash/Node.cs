@@ -9,5 +9,7 @@ namespace DataStructures.DynamicHash
     class Node 
     {
         public Node Parent { get; set; }
+
+        public virtual void VypisNode() { }
     }
 }

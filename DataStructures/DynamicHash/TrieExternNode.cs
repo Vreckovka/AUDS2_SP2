@@ -18,5 +18,17 @@ namespace DataStructures.DynamicHash
             IsLeft = isLeft;
             ValidCount = validCount;
         }
+
+        public override void VypisNode()
+        {
+            //Console.WriteLine($"TRIE EXTERN:\n" +
+            //                  $"Block offset {BlockOffset}\n" +
+            //                  $"Valid count {ValidCount}\n");
+        }
+
+        public override string ToString()
+        {
+            return $"TrieExternNode offset: {BlockOffset}";
+        }
     }
 }

@@ -83,7 +83,8 @@ namespace DataStructures.DynamicHash
         private void VytvorPreplnovaciBlock(T data, Block<T> aktualny)
         {
             Block<T> prvy = aktualny;
-            prvy.Delete(data);
+            if (prvy.Records.Count > _blockCount)
+                prvy.Delete(data);
             while (true)
             {
                 while (aktualny.NextOffset != -1)
@@ -96,13 +97,14 @@ namespace DataStructures.DynamicHash
                     aktualny.Add(data);
                     prvy.ValidCountOfChain++;
 
-                    WriteBlockOnDisk(aktualny);
+                    if (prvy != aktualny)
+                        WriteBlockOnDisk(aktualny);
                     WriteBlockOnDisk(prvy);
                     break;
                 }
                 else
                 {
-                    _lastOffset = _lastOffset + (_blockCount * _sizeOfRecord) + Block<T>.HeadSize;
+                    _lastOffset = _lastOffset + _blockSize;
                     Block<T> preplnovaciBlock = new Block<T>(_lastOffset);
                     preplnovaciBlock.Add(data);
                     preplnovaciBlock.NextOffset = -1;
@@ -125,6 +127,18 @@ namespace DataStructures.DynamicHash
 
             }
             Count++;
+        }
+
+        public Block<T> CreateNewBlock()
+        {
+            Block<T> block = null;
+            if (_freeBlocks.Count != 0)
+                block = new Block<T>(_freeBlocks.Count - 1);
+            else
+                block = new Block<T>(_lastOffset);
+
+            _lastOffset = _lastOffset + _blockSize;
+            return block;
         }
         public void Add(T data)
         {
@@ -172,7 +186,16 @@ namespace DataStructures.DynamicHash
             else
                 current = _root as TrieExternNode;
 
-            Block<T> foundBlock = ReadBlockFromDisk(((TrieExternNode)current).BlockOffset);
+            Block<T> foundBlock = null;
+
+            if (((TrieExternNode)current).BlockOffset != -1)
+                foundBlock = ReadBlockFromDisk(((TrieExternNode)current).BlockOffset);
+            else
+            {
+                foundBlock = CreateNewBlock();
+                ((TrieExternNode)current).BlockOffset = foundBlock.Offset;
+            }
+
             if (_freeBlocks.Contains(foundBlock.Offset))
             {
                 foundBlock = new Block<T>(foundBlock.Offset);
@@ -189,7 +212,7 @@ namespace DataStructures.DynamicHash
             else
             {
                 long offsetForLeft = foundBlock.Offset;
-                long offsetForRight = _lastOffset + (_blockCount * _sizeOfRecord) + Block<T>.HeadSize;
+                long offsetForRight = _lastOffset + _blockSize;
                 long newOffset = -1;
                 bool first = true;
                 while (true)
@@ -270,15 +293,14 @@ namespace DataStructures.DynamicHash
                             var curPom = (current as TrieInternNode)?.Right;
                             if (current is TrieExternNode)
                             {
-                                current = ((TrieInternNode)((TrieExternNode)current).Parent).Right;
                                 curPom = current;
                             }
 
-
                             current = new TrieInternNode();
-
-                            ((TrieInternNode)curPom.Parent).Right = current;
                             current.Parent = curPom.Parent;
+
+                            if (current.Parent is TrieInternNode)
+                                (current.Parent as TrieInternNode).Right = current;
 
                             if (first)
                             {
@@ -286,12 +308,16 @@ namespace DataStructures.DynamicHash
                                 first = false;
                             }
 
-
                             TrieExternNode left = new TrieExternNode(-1, 0, (TrieInternNode)current, true);
                             TrieExternNode right = new TrieExternNode(newOffset, blockRight.ValidCount, (TrieInternNode)current, false);
 
                             ((TrieInternNode)current).Left = left;
                             ((TrieInternNode)current).Right = right;
+
+                            if (curPom == _root)
+                            {
+                                _root = current;
+                            }
 
                         }
                         else
@@ -299,14 +325,14 @@ namespace DataStructures.DynamicHash
                             var curPom = (current as TrieInternNode)?.Left;
                             if (current is TrieExternNode)
                             {
-                                current = ((TrieInternNode)((TrieExternNode)current).Parent).Left;
                                 curPom = current;
                             }
-
                             current = new TrieInternNode();
                             current.Parent = curPom.Parent;
 
-                            ((TrieInternNode)curPom.Parent).Left = current;
+                            if (current.Parent is TrieInternNode)
+                                (current.Parent as TrieInternNode).Left = current;
+
 
                             if (first)
                             {
@@ -320,8 +346,11 @@ namespace DataStructures.DynamicHash
                             ((TrieInternNode)current).Left = left;
                             ((TrieInternNode)current).Right = right;
 
+                            if (curPom == _root)
+                            {
+                                _root = current;
+                            }
                         }
-
                     }
                 }
             }
@@ -345,7 +374,10 @@ namespace DataStructures.DynamicHash
                     }
                     else
                     {
-                        current = ((TrieInternNode)current).Right as TrieExternNode;
+                        if (_freeBlocks.Contains(((TrieExternNode)((TrieInternNode)current).Right).BlockOffset))
+                            current = ((TrieInternNode)current).Left as TrieExternNode;
+                        else
+                            current = ((TrieInternNode)current).Right as TrieExternNode;
                         break;
                     }
                 }
@@ -357,7 +389,11 @@ namespace DataStructures.DynamicHash
                     }
                     else
                     {
-                        current = ((TrieInternNode)current).Left as TrieExternNode;
+                        if (_freeBlocks.Contains(((TrieExternNode)((TrieInternNode)current).Left).BlockOffset))
+                            current = ((TrieInternNode)current).Right as TrieExternNode;
+                        else
+                            current = ((TrieInternNode)current).Left as TrieExternNode;
+
                         break;
                     }
                 }
@@ -374,7 +410,10 @@ namespace DataStructures.DynamicHash
                 found = foundBlock.Find(key);
                 if (found != null)
                     break;
-                foundBlock = ReadBlockFromDisk(foundBlock.NextOffset);
+                if (foundBlock.NextOffset != -1)
+                    foundBlock = ReadBlockFromDisk(foundBlock.NextOffset);
+                else
+                    break;
             }
 
             return found;
@@ -390,13 +429,16 @@ namespace DataStructures.DynamicHash
             {
                 if (hashT[i])
                 {
-                    if (Count <= _blockSize && ((TrieInternNode)current).Right is TrieInternNode)
+                    if (((TrieInternNode)current).Right is TrieInternNode)
                     {
                         current = ((TrieInternNode)current).Right;
                     }
-                    else if (Count <= _blockSize)
+                    else if (_root is TrieInternNode)
                     {
-                        current = ((TrieInternNode) current).Right as TrieExternNode;
+                        if (_freeBlocks.Contains(((TrieExternNode)((TrieInternNode)current).Right).BlockOffset))
+                            current = ((TrieInternNode)current).Left as TrieExternNode;
+                        else
+                            current = ((TrieInternNode)current).Right as TrieExternNode;
                         break;
                     }
                     else
@@ -404,13 +446,16 @@ namespace DataStructures.DynamicHash
                 }
                 else
                 {
-                    if (Count <= _blockSize && ((TrieInternNode)current).Left is TrieInternNode)
+                    if (((TrieInternNode)current).Left is TrieInternNode)
                     {
                         current = ((TrieInternNode)current).Left;
                     }
-                    else if (Count <= _blockSize)
+                    else if (_root is TrieInternNode)
                     {
-                        current = ((TrieInternNode) current).Left as TrieExternNode;
+                        if (_freeBlocks.Contains(((TrieExternNode)((TrieInternNode)current).Left).BlockOffset))
+                            current = ((TrieInternNode)current).Right as TrieExternNode;
+                        else
+                            current = ((TrieInternNode)current).Left as TrieExternNode;
                         break;
                     }
                     else
@@ -431,9 +476,16 @@ namespace DataStructures.DynamicHash
 
         public bool Delete(T key)
         {
-
             TrieExternNode node = null;
-            long offset = GetBlock(key, ref node);
+            long offset = -1;
+            if (_root is TrieExternNode)
+            {
+                node = (TrieExternNode)_root;
+                offset = 0;
+            }
+            else
+                offset = GetBlock(key, ref node);
+
 
             Block<T> block = ReadBlockFromDisk(offset);
             var original = block;
@@ -444,6 +496,7 @@ namespace DataStructures.DynamicHash
                 if (vysledok)
                 {
                     original.ValidCountOfChain--;
+                    Count--;
 
                     if (original != block)
                     {
@@ -454,7 +507,6 @@ namespace DataStructures.DynamicHash
                         node.ValidCount--;
 
                     Striasanie(original, node);
-
                     return true;
                 }
                 else
@@ -487,6 +539,11 @@ namespace DataStructures.DynamicHash
                         fs.SetLength(fs.Length - _blockSize);
                         _lastOffset = _lastOffset - _blockSize;
                     }
+                    else
+                        _freeBlocks.Add(other.Offset);
+
+                    ((TrieExternNode)parent.Left).ValidCount = ((TrieExternNode)parent.Left).ValidCount + ((TrieExternNode)parent.Right).ValidCount;
+                    ((TrieExternNode)parent.Right).ValidCount = 0;
 
                 }
                 else
@@ -498,17 +555,22 @@ namespace DataStructures.DynamicHash
                         fs.SetLength(fs.Length - _blockSize);
                         _lastOffset = _lastOffset - _blockSize;
                     }
+                    else
+                        _freeBlocks.Add(other.Offset);
+
+                    ((TrieExternNode)parent.Right).ValidCount = ((TrieExternNode)parent.Left).ValidCount + ((TrieExternNode)parent.Right).ValidCount;
+                    ((TrieExternNode)parent.Left).ValidCount = 0;
                 }
 
                 foreach (T item in other.Records)
                 {
                     blockFromdeleted.Add(item);
-                }
 
-                _freeBlocks.Add(other.Offset);
+                }
             }
 
-
+            if (blockFromdeleted.ValidCount == 0)
+                _freeBlocks.Add(blockFromdeleted.Offset);
 
             WriteBlockOnDisk(blockFromdeleted);
         }
@@ -517,13 +579,57 @@ namespace DataStructures.DynamicHash
         {
             Queue<Block<T>> queue = new Queue<Block<T>>();
 
-            for (int i = 0; i < _lastOffset + _blockSize; i += _blockSize)
+            for (int i = 0; i < fs.Length; i += _blockSize)
             {
                 Block<T> block = ReadBlockFromDisk(i);
                 queue.Enqueue(block);
             }
 
             return queue;
+        }
+
+        public void GetBlocksSequentionallyConsole()
+        {
+            Console.Clear();
+            Console.WriteLine("Count: " + Count);
+            for (int i = 0; i < fs.Length; i += _blockSize)
+            {
+                Console.WriteLine("---------------------");
+                Block<T> block = ReadBlockFromDisk(i);
+                Console.WriteLine(block);
+                foreach (var item in block.Records)
+                {
+                    Console.WriteLine(item);
+                }
+
+                Console.WriteLine("---------------------");
+            }
+        }
+
+        public void PreOrderTrie()
+        {
+            // Base Case 
+            if (_root == null)
+                return;
+
+            Stack<Node> nodeStack = new Stack<Node>();
+            nodeStack.Push(_root);
+
+            while (nodeStack.Count != 0)
+            {
+                // Pop the top item from stack and print it 
+                Node curr = nodeStack.Peek();
+                curr.VypisNode();
+                Console.WriteLine();
+
+                nodeStack.Pop();
+
+                // Push right and left children of the popped node to stack 
+                if ((curr as TrieInternNode)?.Right != null)
+                    nodeStack.Push((curr as TrieInternNode).Right);
+                if ((curr as TrieInternNode)?.Left != null)
+                    nodeStack.Push((curr as TrieInternNode).Left);
+            }
         }
     }
 }

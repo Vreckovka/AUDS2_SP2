@@ -92,7 +92,7 @@ namespace DynamicHash_Tester
 
         public int GetHash()
         {
-            return Id % 5;
+            return Id % 3;
         }
 
         public int GetSizeOfByteArray()
@@ -102,7 +102,7 @@ namespace DynamicHash_Tester
 
         public override bool Equals(object other)
         {
-            if (((Nehnutelnost)other).SupisneCislo == SupisneCislo && ((Nehnutelnost)other).NazovKatastra == NazovKatastra)
+            if (((Nehnutelnost)other).Id == Id)
                 return true;
             else
                 return false;

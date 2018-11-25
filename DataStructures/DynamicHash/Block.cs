@@ -8,6 +8,7 @@ namespace DataStructures.DynamicHash
 {
    public class Block<T> where T : IHashRecord, IComparable<T>, new()
     {
+        public bool IsValid { get; set; }
         public int ValidCount { get; set; }
         public int ValidCountOfChain { get; set; }
         public int SizeOfChain { get; set; }
@@ -24,6 +25,7 @@ namespace DataStructures.DynamicHash
             Records = new List<T>();
             ValidCountOfChain = 0;
             SizeOfChain = 0;
+
         }
 
         public void Add(T data)
@@ -130,16 +132,19 @@ namespace DataStructures.DynamicHash
                 ValidCount--;
 
                 Records.Remove(key);
-                //TODO: Vymazat prazdny block
-                if (ValidCount == 0)
-                {
-                    Console.WriteLine("PRAZDNY BLOCK");
-                }
-
                 return true;
             }
             else
                 return false;
+        }
+
+        public override string ToString()
+        {
+            return $"Offset: {Offset}\n" +
+                   $"Next offset {NextOffset}\n" +
+                   $"Valid count  {ValidCount}\n" +
+                   $"Valid count of chain {ValidCountOfChain}\n" +
+                   $"Size of chain {SizeOfChain}\n";
         }
     }
 }

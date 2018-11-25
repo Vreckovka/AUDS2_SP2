@@ -27,63 +27,85 @@ namespace DynamicHash_Tester
         static Stopwatch stopwatch = new Stopwatch();
         private static List<Nehnutelnost> nehnutelnosts = new List<Nehnutelnost>();
         private static DynamicHash<Nehnutelnost> dynamicHash;
+        private static int _pocet;
         public MainWindow()
         {
             InitializeComponent();
-
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
-            int count = 2;
-            stopwatch.Reset();
-            stopwatch.Start();
 
-
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < 10; i++)
             {
                 RandomInsert();
             }
 
+            PridaZPole();
+            //dynamicHash.Delete(nehnutelnostiPole[8]);
+            //dynamicHash.Delete(nehnutelnostiPole[6]);
+            //dynamicHash.Add(nehnutelnostiPole[6]);
+            //dynamicHash.Delete(nehnutelnostiPole[6]);
+            //dynamicHash.Delete(nehnutelnostiPole[1]);
 
-            stopwatch.Stop();
+            //dynamicHash.Add(new Nehnutelnost { Id = 11, NazovKatastra = "", Popis = "", });
+            //dynamicHash.Add(new Nehnutelnost { Id = 10, NazovKatastra = "", Popis = "", });
+            //dynamicHash.Add(new Nehnutelnost { Id = 50, NazovKatastra = "", Popis = "", });
+            //DrawBlocksSequentionally();
+            //Console.WriteLine(dynamicHash.Find(nehnutelnostiPole[4]));
+
+            RandomOperation();
+            //Thread thread = new Thread(RandomOperation);
+            //thread.Start();
+
+            Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
-
-            //RandomOperation();
-            Thread thread = new Thread(RandomOperation);
-            thread.Start();
-
-
-            Console.WriteLine($"Added {count:N0} in: {stopwatch.Elapsed}");
-
-            RandomInsert();
-
-
         }
+
+        private static Nehnutelnost[] nehnutelnostiPole = new Nehnutelnost[]
+        {
+            new Nehnutelnost {Id = 0, NazovKatastra = "", Popis = "", },
+            new Nehnutelnost {Id = 1, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 2, NazovKatastra = "", Popis = "", },
+            new Nehnutelnost {Id = 3, NazovKatastra = "", Popis = "", },
+            new Nehnutelnost {Id = 4, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 5, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 6, NazovKatastra = "", Popis = "", },
+            new Nehnutelnost {Id = 7, NazovKatastra = "", Popis = "", },
+            new Nehnutelnost {Id = 8, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 9, NazovKatastra = "", Popis = "",},
+        };
 
         public void RandomOperation()
         {
-            for (int i = 0; i < 20; i++)
+           
+            for (int i = 0; i < 10; i++)
             {
                 RandomInsert();
-                if (random.Next(0, 100) > 50)
-                    RandomDelete();
-
-               
-
-                Dispatcher.Invoke(() => Canvas_Main.Children.Clear());
-                DrawBlocksSequentionally();
-
-                Thread.Sleep(2000);
+                if (random.Next(0, 100) > 40)
+                {
+                   // RandomDelete();
+                   
+                }
+               // Console.WriteLine(_pocet);
             }
         }
 
         private static string[] mesta = new string[]
             {"Chynorany", "Topolcany", "Prievidza", "Kosice", "Ruzomberok", "Brezno", "Zilina"};
+
+        public  void PridaZPole()
+        {
+            for (int i = 0; i < nehnutelnostiPole.Length; i++)
+                dynamicHash.Add(nehnutelnostiPole[i]);
+
+          
+        }
         public static void RandomInsert()
         {
             int supCislo = random.Next(0, 1000);
-            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, nehnutelnosts.Count);
+            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, _pocet);
 
             dynamicHash.Add(nehnutelnost);
             nehnutelnosts.Add(nehnutelnost);
+            _pocet++;
         }
 
         public static void RandomDelete()
@@ -95,6 +117,7 @@ namespace DynamicHash_Tester
 
         public void DrawBlocksSequentionally()
         {
+            Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
             var queue = dynamicHash.GetBlocksSequentionally();
             foreach (Block<Nehnutelnost> block in queue)
             {
@@ -104,6 +127,7 @@ namespace DynamicHash_Tester
 
         private void DrawBlock(Block<Nehnutelnost> nehnutelnosts)
         {
+
             Dispatcher.Invoke(() =>
             {
                 GroupBox block = new GroupBox() { Header = $"Offset: {nehnutelnosts.Offset}" };
@@ -167,7 +191,6 @@ namespace DynamicHash_Tester
                     header.BorderThickness = new Thickness(0);
                     items.BorderThickness = new Thickness(0);
                 }
-
 
                 Canvas_Main.Children.Add(block);
             });
