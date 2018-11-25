@@ -11,7 +11,7 @@ namespace DynamicHash_Tester
     {
         public Nehnutelnost()
         {
-          
+
         }
 
         public Nehnutelnost(int supisneCislo, string nazovKatastra, string popis, int id)

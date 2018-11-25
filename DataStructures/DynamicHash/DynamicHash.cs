@@ -580,85 +580,108 @@ namespace DataStructures.DynamicHash
             //Pre preplnujuce bloky
             else if (((original.SizeOfChain + 1) * _blockCount) >= original.ValidCountOfChain + _blockCount)
             {
-                List<Block<T>> zostavajuce = new List<Block<T>>();
-                Block<T> current = deleteBlock;
-                Block<T> next = ReadBlockFromDisk(current.NextOffset);
-
-                long oneBeforeOffset = -1;
-                while (current.NextOffset != -1)
+                if (original.SizeOfChain > 0)
                 {
-                    if (next.ValidCount < _blockCount)
+                    Block<T> current = deleteBlock;
+                    Block<T> next = ReadBlockFromDisk(current.NextOffset);
+
+                    long oneBeforeOffset = -1;
+                    while (current.NextOffset != -1)
                     {
-                        while (current.Records.Count != _blockCount)
+                        if (next.ValidCount < _blockCount)
                         {
-                            current.Add(next.Records[0]);
-                            next.Delete(next.Records[0]);
-                            current.ValidCountOfChain--;
-                        }
-
-                        if (next.ValidCount > 0)
-                        {
-                            if (current != original)
-                                WriteBlockOnDisk(current);
-                            zostavajuce.Add(next);
-                            current = next;
-                        }
-                        else
-                        {
-                            if (next.Offset == _lastOffset)
+                            while (current.Records.Count != _blockCount)
                             {
-                                fs.SetLength(fs.Length - _blockSize);
-                                _lastOffset = _lastOffset - _blockSize;
+                                current.Add(next.Records[0]);
+                                next.Delete(next.Records[0]);
+                                current.ValidCountOfChain--;
+                            }
 
-                                //ak sa vymazava z posledneho a current je predposledny
-                                if (oneBeforeOffset == -1)
-                                {
-                                    current.NextOffset = -1;
+                            if (next.ValidCount > 0)
+                            {
+                                if (current != original)
                                     WriteBlockOnDisk(current);
-                                }
-                                else
-                                {
-                                    var last = ReadBlockFromDisk(oneBeforeOffset);
-                                    last.NextOffset = -1;
-
-                                    WriteBlockOnDisk(last);
-                                }                       
+                                current = next;
                             }
                             else
                             {
-                                WriteBlockOnDisk(next);
-                                current.NextOffset = next.NextOffset;
-                                _freeBlocks.Add(next.Offset);
+                                if (next.Offset == _lastOffset)
+                                {
+                                    original.SizeOfChain--;
+                                    DeleteLastBlock();
+
+                                    //ak sa vymazava z posledneho a current je predposledny
+                                    if (oneBeforeOffset == -1)
+                                    {
+                                        current.NextOffset = -1;
+                                        WriteBlockOnDisk(current);
+                                    }
+                                    else
+                                    {
+                                        var last = ReadBlockFromDisk(oneBeforeOffset);
+                                        last.NextOffset = -1;
+
+                                        WriteBlockOnDisk(last);
+                                    }
+
+                                    if (original.Records != null)
+                                        WriteBlockOnDisk(original);
+                                }
+                                else
+                                {
+                                    original.SizeOfChain--;
+                                    WriteBlockOnDisk(next);
+                                    current.NextOffset = next.NextOffset;
+                                    _freeBlocks.Add(next.Offset);
+
+                                    if (original.Records != null)
+                                        WriteBlockOnDisk(original);
+                                }
+
+                                if (current.Records != null)
+                                    WriteBlockOnDisk(current);
+
+                                break;
                             }
-                            if (current == original)
-                                original.SizeOfChain--;
-
-                            if (current.Records != null)
-                                WriteBlockOnDisk(current);
-
-                            break;
                         }
+
+                        oneBeforeOffset = next.Offset;
+                        next = ReadBlockFromDisk(next.NextOffset);
+
                     }
 
-                    oneBeforeOffset = next.Offset;
-                    next = ReadBlockFromDisk(next.NextOffset);
+                    if (current != original && original.Records != null)
+                    {
+                        original.SizeOfChain--;
+                        WriteBlockOnDisk(original);
+                    }
 
+                    striasloSa = true;
                 }
-
-                if (current != original)
+                else if (deleteBlock.Offset == _lastOffset)
                 {
                     original.SizeOfChain--;
-                    WriteBlockOnDisk(original);
+                    if (original.Records != null)
+                        WriteBlockOnDisk(original);
+                    DeleteLastBlock();
                 }
 
-                striasloSa = true;
+
+                if (original.ValidCount == 0)
+                    _freeBlocks.Add(original.Offset);
+
+                if (!striasloSa)
+                    if (original.Records != null)
+                        WriteBlockOnDisk(original);
+
+
             }
+        }
 
-            if (original.ValidCount == 0)
-                _freeBlocks.Add(original.Offset);
-
-            if (!striasloSa)
-                WriteBlockOnDisk(original);
+        public void DeleteLastBlock()
+        {
+            fs.SetLength(fs.Length - _blockSize);
+            _lastOffset = _lastOffset - _blockSize;
         }
 
         public Queue<Block<T>> GetBlocksSequentionally()

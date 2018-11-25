@@ -68,7 +68,8 @@ namespace DynamicHash_Tester
            
             for (int i = 0; i < 100; i++)
             {
-                
+                if (i == 20)
+                    ;
                 RandomInsert();
                 dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
@@ -77,6 +78,8 @@ namespace DynamicHash_Tester
                     RandomDelete();
                     dynamicHash.GetBlocksSequentionallyConsole();
                 }
+
+                Console.WriteLine(i);
             }
         }
 
