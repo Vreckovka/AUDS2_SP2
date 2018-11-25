@@ -130,6 +130,7 @@ namespace DataStructures.DynamicHash
             if (najdene != null && najdene.Equals(key))
             {
                 ValidCount--;
+                ValidCountOfChain--;
 
                 Records.Remove(key);
                 return true;

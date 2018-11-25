@@ -33,27 +33,15 @@ namespace DynamicHash_Tester
             InitializeComponent();
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
 
-            for (int i = 0; i < 10; i++)
-            {
-                RandomInsert();
-            }
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    RandomInsert();
+            //}
 
             PridaZPole();
-            //dynamicHash.Delete(nehnutelnostiPole[8]);
-            //dynamicHash.Delete(nehnutelnostiPole[6]);
-            //dynamicHash.Add(nehnutelnostiPole[6]);
-            //dynamicHash.Delete(nehnutelnostiPole[6]);
-            //dynamicHash.Delete(nehnutelnostiPole[1]);
-
-            //dynamicHash.Add(new Nehnutelnost { Id = 11, NazovKatastra = "", Popis = "", });
-            //dynamicHash.Add(new Nehnutelnost { Id = 10, NazovKatastra = "", Popis = "", });
-            //dynamicHash.Add(new Nehnutelnost { Id = 50, NazovKatastra = "", Popis = "", });
-            //DrawBlocksSequentionally();
-            //Console.WriteLine(dynamicHash.Find(nehnutelnostiPole[4]));
-
+            
             RandomOperation();
-            //Thread thread = new Thread(RandomOperation);
-            //thread.Start();
+
 
             Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
@@ -71,20 +59,24 @@ namespace DynamicHash_Tester
             new Nehnutelnost {Id = 7, NazovKatastra = "", Popis = "", },
             new Nehnutelnost {Id = 8, NazovKatastra = "", Popis = "",},
             new Nehnutelnost {Id = 9, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 10, NazovKatastra = "", Popis = "",},
+            new Nehnutelnost {Id = 11, NazovKatastra = "", Popis = "",},
         };
 
         public void RandomOperation()
         {
            
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
+                
                 RandomInsert();
+                dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
                 {
-                   // RandomDelete();
                    
+                    RandomDelete();
+                    dynamicHash.GetBlocksSequentionallyConsole();
                 }
-               // Console.WriteLine(_pocet);
             }
         }
 

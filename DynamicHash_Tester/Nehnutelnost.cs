@@ -92,7 +92,7 @@ namespace DynamicHash_Tester
 
         public int GetHash()
         {
-            return Id % 3;
+            return Id % 1;
         }
 
         public int GetSizeOfByteArray()
