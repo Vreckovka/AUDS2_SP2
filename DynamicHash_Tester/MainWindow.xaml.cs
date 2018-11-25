@@ -42,7 +42,6 @@ namespace DynamicHash_Tester
             
             RandomOperation();
 
-
             Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
         }
@@ -66,17 +65,13 @@ namespace DynamicHash_Tester
         public void RandomOperation()
         {
            
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 500; i++)
             {
-                if (i == 20)
-                    ;
                 RandomInsert();
-                dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
                 {
                    
                     RandomDelete();
-                    dynamicHash.GetBlocksSequentionallyConsole();
                 }
 
                 Console.WriteLine(i);

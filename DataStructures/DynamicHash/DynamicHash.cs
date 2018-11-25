@@ -583,7 +583,19 @@ namespace DataStructures.DynamicHash
                 if (original.SizeOfChain > 0)
                 {
                     Block<T> current = deleteBlock;
-                    Block<T> next = ReadBlockFromDisk(current.NextOffset);
+                    Block<T> next = null;
+                    if (current.NextOffset != -1)
+                        next = ReadBlockFromDisk(current.NextOffset);
+                    else
+                    {
+                        if (original.NextOffset == current.Offset)
+                            original.NextOffset = -1;
+
+                        if (current.Offset == _lastOffset)
+                            DeleteLastBlock();
+                        else
+                            _freeBlocks.Add(current.Offset);
+                    }
 
                     long oneBeforeOffset = -1;
                     while (current.NextOffset != -1)
