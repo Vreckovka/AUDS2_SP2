@@ -30,6 +30,24 @@ namespace DataStructures.SortedList
             Peek = _records[0];
         }
 
+        public T Cut()
+        {
+            if (Count > 0)
+            {
+                var item = _records[_records.Count - 1];
+                _records.RemoveAt(_records.Count - 1);
+
+                Count--;
+
+                if (_records.Count > 0)
+                    Last = _records[_records.Count - 1];
+                return item;
+            }
+
+            else
+                throw new ArgumentException("List is empty");
+        }
+
         public T Pop()
         {
             if (Count > 0)
@@ -38,6 +56,10 @@ namespace DataStructures.SortedList
                 _records.RemoveAt(0);
 
                 Count--;
+
+                if (_records.Count > 0)
+                    Peek = _records[0];
+
                 return item;
             }
 

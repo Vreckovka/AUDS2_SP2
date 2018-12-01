@@ -24,19 +24,19 @@ namespace DynamicHash_Tester
     /// </summary>
     public partial class MainWindow : Window
     {
-        static Random random = new Random(1);
+        static Random random = new Random(6);
         static Stopwatch stopwatch = new Stopwatch();
         private static List<Nehnutelnost> nehnutelnosts = new List<Nehnutelnost>();
         private static DynamicHash<Nehnutelnost> dynamicHash;
-        private static int _pocet;
+        private static int _pocet = 0;
         public MainWindow()
         {
             InitializeComponent();
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
 
-            PridaZPole();
-
-
+            //RandomOperation(100);
+            //dynamicHash.GetBlocksSequentionallyConsole();
+            //SkontrolujeVsetkyPrvky();
             Test(100000);
 
             //Console.WriteLine(dynamicHash.Count);
@@ -48,9 +48,13 @@ namespace DynamicHash_Tester
         {
             for (int i = 0; i < count; i++)
             {
+                if (i == 1230)
+                    ;
                 Console.WriteLine($"TEST: {i}");
                 random = new Random(i);
-                RandomOperation();
+                RandomOperation(1000);
+                SkontrolujeVsetkyPrvky();
+
                 dynamicHash.Clear();
                 nehnutelnosts.Clear();
             }
@@ -71,20 +75,35 @@ namespace DynamicHash_Tester
             new Nehnutelnost {Id = 11, NazovKatastra = "", Popis = "",},
         };
 
-        public static void RandomOperation()
+
+        public static void SkontrolujeVsetkyPrvky()
         {
-            for (int i = 0; i < 10000; i++)
+            foreach (var item in nehnutelnosts)
             {
-                if (i == 64)
+               var vysledok = dynamicHash.Find(new Nehnutelnost(-1,"","",item.Id));
+                if (vysledok == null)
+                    throw new Exception("Nesedia prvky");
+            }
+        }
+
+        public static void RandomOperation(int pocetOperacii)
+        {
+            for (int i = 0; i < pocetOperacii; i++)
+            {
+                if (i == 35)
                     ;
                 RandomInsert();
+                //dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
                 {
+                    //Console.WriteLine(i);
                     if (!RandomDelete())
                         throw new Exception("CHYBA");
+                  //  dynamicHash.GetBlocksSequentionallyConsole();
+                   
                 }
-
-
+                ;
+                //Console.WriteLine(i);
             }
         }
 
@@ -100,8 +119,10 @@ namespace DynamicHash_Tester
         public static void RandomInsert()
         {
             int supCislo = random.Next(0, 1000);
-            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, _pocet);
+            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, dynamicHash.Count);
 
+            if (supCislo == 179 && dynamicHash.Count == 22)
+                ;
             dynamicHash.Add(nehnutelnost);
             nehnutelnosts.Add(nehnutelnost);
             _pocet++;
