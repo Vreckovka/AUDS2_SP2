@@ -47,6 +47,7 @@
     <Compile Include="DynamicHash\Node.cs" />
     <Compile Include="DynamicHash\TrieExternNode.cs" />
     <Compile Include="DynamicHash\TrieInternNode.cs" />
+    <Compile Include="SortedList\SortedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

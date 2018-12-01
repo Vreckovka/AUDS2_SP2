@@ -15,6 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DataStructures.DynamicHash;
+using DataStructures.SortedList;
 
 namespace DynamicHash_Tester
 {
@@ -33,19 +34,27 @@ namespace DynamicHash_Tester
             InitializeComponent();
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
 
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    RandomInsert();
-            //}
-
             PridaZPole();
-            
-            RandomOperation();
 
-            Console.WriteLine(dynamicHash.Count);
+
+            Test(100000);
+
+            //Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
+            // dynamicHash.GetBlocksSequentionallyConsole();
         }
 
+        public static void Test(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Console.WriteLine($"TEST: {i}");
+                random = new Random(i);
+                RandomOperation();
+                dynamicHash.Clear();
+                nehnutelnosts.Clear();
+            }
+        }
         private static Nehnutelnost[] nehnutelnostiPole = new Nehnutelnost[]
         {
             new Nehnutelnost {Id = 0, NazovKatastra = "", Popis = "", },
@@ -62,31 +71,31 @@ namespace DynamicHash_Tester
             new Nehnutelnost {Id = 11, NazovKatastra = "", Popis = "",},
         };
 
-        public void RandomOperation()
+        public static void RandomOperation()
         {
-           
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 10000; i++)
             {
+                if (i == 64)
+                    ;
                 RandomInsert();
                 if (random.Next(0, 100) > 40)
                 {
-                   
-                    RandomDelete();
+                    if (!RandomDelete())
+                        throw new Exception("CHYBA");
                 }
 
-                Console.WriteLine(i);
+
             }
         }
 
         private static string[] mesta = new string[]
             {"Chynorany", "Topolcany", "Prievidza", "Kosice", "Ruzomberok", "Brezno", "Zilina"};
 
-        public  void PridaZPole()
+        public void PridaZPole()
         {
             for (int i = 0; i < nehnutelnostiPole.Length; i++)
                 dynamicHash.Add(nehnutelnostiPole[i]);
 
-          
         }
         public static void RandomInsert()
         {
@@ -98,11 +107,13 @@ namespace DynamicHash_Tester
             _pocet++;
         }
 
-        public static void RandomDelete()
+        public static bool RandomDelete()
         {
             int index = random.Next(0, nehnutelnosts.Count);
-            dynamicHash.Delete(nehnutelnosts[index]);
+            var bla = dynamicHash.Delete(nehnutelnosts[index]);
             nehnutelnosts.Remove(nehnutelnosts[index]);
+
+            return bla;
         }
 
         public void DrawBlocksSequentionally()
@@ -184,6 +195,32 @@ namespace DynamicHash_Tester
 
                 Canvas_Main.Children.Add(block);
             });
+        }
+
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+        private void Pridaj_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Nehnutelnost nehnutelnost = new Nehnutelnost(random.Next(0, 1000), mesta[random.Next(0, mesta.Length)], "POPIS: " + RandomString(5), Convert.ToInt32(ID.Text));
+                dynamicHash.Add(nehnutelnost);
+                DrawBlocksSequentionally();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void Vymaz_Click(object sender, RoutedEventArgs e)
+        {
+            dynamicHash.Delete(new Nehnutelnost(-1, "", "", Convert.ToInt32(ID.Text)));
+            DrawBlocksSequentionally();
         }
     }
 }

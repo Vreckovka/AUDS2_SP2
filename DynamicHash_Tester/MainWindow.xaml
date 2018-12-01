@@ -7,9 +7,22 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Foreground="Black" Background="White">
 
-    <ScrollViewer>
-        <StackPanel x:Name="Canvas_Main">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
 
+        </Grid.ColumnDefinitions>
+        <ScrollViewer>
+            <StackPanel x:Name="Canvas_Main">
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <Label Content="ID"/>
+            <TextBox x:Name="ID"/>
+            <Button x:Name="Pridaj" Content="Pridaj" Click="Pridaj_Click"/>
+            <Button x:Name="Vymaz" Content="Vymaz" Click="Vymaz_Click" />
         </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </Window>

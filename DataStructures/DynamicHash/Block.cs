@@ -40,7 +40,6 @@ namespace DataStructures.DynamicHash
 
             Records[indexOfElement] = data;
             ValidCount++;
-            ValidCountOfChain++;
         }
 
         private int FindIndexForAdd(T value)
@@ -130,8 +129,6 @@ namespace DataStructures.DynamicHash
             if (najdene != null && najdene.Equals(key))
             {
                 ValidCount--;
-                ValidCountOfChain--;
-
                 Records.Remove(key);
                 return true;
             }
@@ -141,11 +138,11 @@ namespace DataStructures.DynamicHash
 
         public override string ToString()
         {
-            return $"Offset: {Offset}\n" +
-                   $"Next offset {NextOffset}\n" +
-                   $"Valid count  {ValidCount}\n" +
-                   $"Valid count of chain {ValidCountOfChain}\n" +
-                   $"Size of chain {SizeOfChain}\n";
+            return $"Offset: {Offset} \n" +
+                   $"Next offset {NextOffset} \n" +
+                   $"Valid count  {ValidCount} \n" +
+                   $"Valid count of chain {ValidCountOfChain} \n" +
+                   $"Size of chain {SizeOfChain} \n";
         }
     }
 }

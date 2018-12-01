@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using DataStructures.SortedList;
 
 namespace DataStructures.DynamicHash
 {
@@ -14,7 +15,7 @@ namespace DataStructures.DynamicHash
         private int _sizeOfRecord;
         private long _lastOffset;
         private FileStream fs;
-        public List<long> _freeBlocks;
+        public SortedList<long> _freeBlocks;
         public int Count { get; set; }
         public DynamicHash(int blockCount, string pathOfFile)
         {
@@ -24,7 +25,7 @@ namespace DataStructures.DynamicHash
             _root = new TrieExternNode(0, 0, null, false);
             _blockSize = (blockCount * _sizeOfRecord) + Block<T>.HeadSize;
             WriteBlockOnDisk(new Block<T>(0));
-            _freeBlocks = new List<long>();
+            _freeBlocks = new SortedList<long>();
         }
 
 
@@ -83,9 +84,11 @@ namespace DataStructures.DynamicHash
         private void VytvorPreplnovaciBlock(T data, Block<T> aktualny)
         {
             Block<T> prvy = aktualny;
+
             if (prvy.Records.Count > _blockCount)
                 prvy.Delete(data);
             bool pridane = false;
+
             while (true)
             {
                 while (aktualny.NextOffset != -1)
@@ -107,14 +110,12 @@ namespace DataStructures.DynamicHash
 
                 if (!pridane)
                 {
-                    _lastOffset = _lastOffset + _blockSize;
-                    Block<T> preplnovaciBlock = new Block<T>(_lastOffset);
+                    Block<T> preplnovaciBlock = CreateNewBlock();
                     preplnovaciBlock.Add(data);
                     preplnovaciBlock.NextOffset = -1;
 
                     WriteBlockOnDisk(preplnovaciBlock);
-
-                    aktualny.NextOffset = _lastOffset;
+                    aktualny.NextOffset = preplnovaciBlock.Offset;
                     prvy.SizeOfChain++;
                     prvy.ValidCountOfChain++;
 
@@ -137,11 +138,15 @@ namespace DataStructures.DynamicHash
         {
             Block<T> block = null;
             if (_freeBlocks.Count != 0)
-                block = new Block<T>(_freeBlocks.Count - 1);
+            {
+                block = new Block<T>(_freeBlocks.Pop());
+            }
             else
+            {
+                _lastOffset = _lastOffset + _blockSize;
                 block = new Block<T>(_lastOffset);
+            }
 
-            _lastOffset = _lastOffset + _blockSize;
             return block;
         }
         public void Add(T data)
@@ -203,12 +208,14 @@ namespace DataStructures.DynamicHash
             if (_freeBlocks.Contains(foundBlock.Offset))
             {
                 foundBlock = new Block<T>(foundBlock.Offset);
-                _freeBlocks.Remove(foundBlock.Offset);
+                Console.WriteLine("NIECO SA MI NEZDA, TAM KDE JE BOL FREEBLOCKS");
             }
 
             if (foundBlock.ValidCount < _blockCount)
             {
                 foundBlock.Add(data);
+                foundBlock.ValidCountOfChain++;
+
                 ((TrieExternNode)current).ValidCount = foundBlock.ValidCount;
                 WriteBlockOnDisk(foundBlock);
 
@@ -281,6 +288,9 @@ namespace DataStructures.DynamicHash
 
                         ((TrieInternNode)current).Left = left;
                         ((TrieInternNode)current).Right = right;
+
+                        blockLeft.ValidCountOfChain += blockLeft.ValidCount;
+                        blockRight.ValidCountOfChain += blockRight.ValidCount;
 
                         WriteBlockOnDisk(blockLeft);
                         WriteBlockOnDisk(blockRight);
@@ -490,29 +500,21 @@ namespace DataStructures.DynamicHash
             else
                 offset = GetBlock(key, ref node);
 
-
+            //TODO: Osetrit ked uzivatel zada zle data a dany block neni platny shodou okolnosti
             Block<T> block = ReadBlockFromDisk(offset);
             var original = block;
+
             do
             {
                 bool vysledok = block.Delete(key);
 
                 if (vysledok)
                 {
+                    //Vseobecne podmienky
                     Count--;
-                    if (block != original)
-                        original.ValidCountOfChain--;
+                    original.ValidCountOfChain--;
 
                     Striasanie(original, block, node);
-
-                    if (original != block)
-                    {
-                        if (block.Records != null)
-                            WriteBlockOnDisk(block);
-                    }
-                    else
-                        node.ValidCount--;
-
                     return true;
                 }
                 else
@@ -528,172 +530,158 @@ namespace DataStructures.DynamicHash
 
         }
 
+        private List<Block<T>> NacitajRetazec(Block<T> original, Block<T> deleteBlock)
+        {
+            List<Block<T>> retazec = new List<Block<T>>();
+            //Nacitat cely retazec 
+            if (original.NextOffset != -1)
+            {
+                Block<T> current = ReadBlockFromDisk(original.NextOffset);
+                retazec.Add(original);
+
+                Block<T> next = null;
+
+                for (int i = 0; i < original.SizeOfChain; i++)
+                {
+                    if (current.Offset != deleteBlock.Offset)
+                    {
+                        if (current.NextOffset != -1)
+                            next = ReadBlockFromDisk(current.NextOffset);
+                        retazec.Add(current);
+                        current = next;
+                    }
+                    else if (current.NextOffset != -1)
+                    {
+                        current = ReadBlockFromDisk(current.NextOffset);
+                        retazec.Add(deleteBlock);
+                    }
+                    else
+                        retazec.Add(deleteBlock);
+                }
+            }
+
+            return retazec;
+        }
+
         private void Striasanie(Block<T> original, Block<T> deleteBlock, TrieExternNode trieInternNode)
         {
-            bool striasloSa = false;
-            TrieInternNode parent = (TrieInternNode)trieInternNode.Parent;
-            //Pre nody
-            if (parent != null && (parent.Left is TrieExternNode) && (parent.Right is TrieExternNode) &&
-            ((TrieExternNode)parent.Left).ValidCount + ((TrieExternNode)parent.Right).ValidCount <= _blockCount && ((TrieExternNode)parent.Left).ValidCount > 0
-                    && ((TrieExternNode)parent.Right).ValidCount > 0)
+            Block<T> current = deleteBlock;
+            Block<T> poslednyBlok = null;
+            bool striasaloSa = false;
+            //Ak je mozne usetrit jeden blok
+            if ((original.SizeOfChain + 1) * _blockCount >= original.ValidCountOfChain + _blockCount)
             {
-                Block<T> other = null;
-                if (trieInternNode.IsLeft)
+                striasaloSa = true;
+                int acutalIndex = 1;
+                List<Block<T>> retazec = NacitajRetazec(original, deleteBlock);
+
+                //ak sa vymazal posledny prvok z celeho retazca
+                if (retazec.Count > 0)
                 {
-                    other = ReadBlockFromDisk(((TrieExternNode)parent.Right).BlockOffset);
-                    if (((TrieExternNode)parent.Right).BlockOffset == _lastOffset)
-                    {
-                        fs.SetLength(fs.Length - _blockSize);
-                        _lastOffset = _lastOffset - _blockSize;
-                    }
-                    else
-                        _freeBlocks.Add(other.Offset);
-
-                    ((TrieExternNode)parent.Left).ValidCount = ((TrieExternNode)parent.Left).ValidCount + ((TrieExternNode)parent.Right).ValidCount;
-                    ((TrieExternNode)parent.Right).ValidCount = 0;
-
-                }
-                else
-                {
-                    other = ReadBlockFromDisk(((TrieExternNode)parent.Left).BlockOffset);
-
-                    if (((TrieExternNode)parent.Left).BlockOffset == _lastOffset)
-                    {
-                        fs.SetLength(fs.Length - _blockSize);
-                        _lastOffset = _lastOffset - _blockSize;
-                    }
-                    else
-                        _freeBlocks.Add(other.Offset);
-
-                    ((TrieExternNode)parent.Right).ValidCount = ((TrieExternNode)parent.Left).ValidCount + ((TrieExternNode)parent.Right).ValidCount;
-                    ((TrieExternNode)parent.Left).ValidCount = 0;
-                }
-
-                foreach (T item in other.Records)
-                {
-                    original.Add(item);
-
-                }
-
-                striasloSa = true;
-            }
-            //Pre preplnujuce bloky
-            else if (((original.SizeOfChain + 1) * _blockCount) >= original.ValidCountOfChain + _blockCount)
-            {
-                if (original.SizeOfChain > 0)
-                {
-                    Block<T> current = deleteBlock;
+                    current = retazec[0];
                     Block<T> next = null;
-                    if (current.NextOffset != -1)
-                        next = ReadBlockFromDisk(current.NextOffset);
-                    else
-                    {
-                        if (original.NextOffset == current.Offset)
-                            original.NextOffset = -1;
 
-                        if (current.Offset == _lastOffset)
-                            DeleteLastBlock();
-                        else
-                            _freeBlocks.Add(current.Offset);
-                    }
-
-                    long oneBeforeOffset = -1;
-                    while (current.NextOffset != -1)
+                    //Ci je posledny v retazci
+                    if (deleteBlock != retazec[retazec.Count - 1] || retazec[retazec.Count - 1].ValidCount > 0)
                     {
-                        if (next.ValidCount < _blockCount)
+                        while (acutalIndex <= original.SizeOfChain)
                         {
-                            while (current.Records.Count != _blockCount)
+                            //Presypat vsetky prvky do otca
+                            bool change = false;
+                            next = retazec[acutalIndex];
+
+                            while (current.Records.Count < _blockCount && next.Records.Count > 0)
                             {
                                 current.Add(next.Records[0]);
                                 next.Delete(next.Records[0]);
-                                current.ValidCountOfChain--;
+                                change = true;
                             }
 
-                            if (next.ValidCount > 0)
+                            Block<T> beforeNext = current;
+                            current = next;
+
+                            //Ak uz ten dalsi je posledny, tak bude vymazany tak nastavime na -1
+                            if (current.NextOffset == -1)
                             {
-                                if (current != original)
-                                    WriteBlockOnDisk(current);
-                                current = next;
+                                beforeNext.NextOffset = -1;
                             }
-                            else
+
+                            if (beforeNext != original && change)
                             {
-                                if (next.Offset == _lastOffset)
-                                {
-                                    original.SizeOfChain--;
-                                    DeleteLastBlock();
-
-                                    //ak sa vymazava z posledneho a current je predposledny
-                                    if (oneBeforeOffset == -1)
-                                    {
-                                        current.NextOffset = -1;
-                                        WriteBlockOnDisk(current);
-                                    }
-                                    else
-                                    {
-                                        var last = ReadBlockFromDisk(oneBeforeOffset);
-                                        last.NextOffset = -1;
-
-                                        WriteBlockOnDisk(last);
-                                    }
-
-                                    if (original.Records != null)
-                                        WriteBlockOnDisk(original);
-                                }
-                                else
-                                {
-                                    original.SizeOfChain--;
-                                    WriteBlockOnDisk(next);
-                                    current.NextOffset = next.NextOffset;
-                                    _freeBlocks.Add(next.Offset);
-
-                                    if (original.Records != null)
-                                        WriteBlockOnDisk(original);
-                                }
-
-                                if (current.Records != null)
-                                    WriteBlockOnDisk(current);
-
-                                break;
+                                WriteBlockOnDisk(beforeNext);
                             }
+
+                            acutalIndex++;
+                        }
+                    }
+                    else
+                    {
+                        retazec[retazec.Count - 2].NextOffset = -1;
+                        if (retazec[retazec.Count - 2] != original)
+                        {
+                            WriteBlockOnDisk(retazec[retazec.Count - 2]);
                         }
 
-                        oneBeforeOffset = next.Offset;
-                        next = ReadBlockFromDisk(next.NextOffset);
-
+                        poslednyBlok = retazec[retazec.Count - 1];
                     }
 
-                    if (current != original && original.Records != null)
-                    {
-                        original.SizeOfChain--;
-                        WriteBlockOnDisk(original);
-                    }
 
-                    striasloSa = true;
-                }
-                else if (deleteBlock.Offset == _lastOffset)
-                {
                     original.SizeOfChain--;
-                    if (original.Records != null)
-                        WriteBlockOnDisk(original);
-                    DeleteLastBlock();
+                }
+                else
+                {
+                    trieInternNode.ValidCount = 0;
+                    trieInternNode.BlockOffset = -1;
                 }
 
-
-                if (original.ValidCount == 0)
-                    _freeBlocks.Add(original.Offset);
-
-                if (!striasloSa)
-                    if (original.Records != null)
-                        WriteBlockOnDisk(original);
+            }
 
 
+            //Ak sa neztriasalo
+            if (current.Records.Count > 0 && deleteBlock != original && !striasaloSa)
+            {
+                WriteBlockOnDisk(deleteBlock);
+            }
+            //Ak sa striaslo tak count je 0, lebo sa to presypalo aby bol posledny przadny
+            else if (poslednyBlok == null && striasaloSa)
+            {
+                if (current.Offset != _lastOffset)
+                    _freeBlocks.Add(current.Offset);
+                else
+                    DeleteLastBlock();
+            }
+            else if (striasaloSa)
+            {
+
+                if (poslednyBlok.Offset != _lastOffset)
+                    _freeBlocks.Add(deleteBlock.Offset);
+                else
+                    DeleteLastBlock();
+            }
+
+            //Zapisat original ak nie je prazdny retazec
+            if (trieInternNode.BlockOffset != -1)
+            {
+                trieInternNode.ValidCount = original.ValidCount;
+                WriteBlockOnDisk(original);
             }
         }
 
         public void DeleteLastBlock()
         {
-            fs.SetLength(fs.Length - _blockSize);
-            _lastOffset = _lastOffset - _blockSize;
+            long sizeToCut = _blockSize;
+
+            while (_freeBlocks.Count > 0 && _freeBlocks.Last == _lastOffset - _blockSize)
+            {
+                sizeToCut += _blockSize;
+                _freeBlocks.Pop();
+            }
+
+
+            fs.SetLength(fs.Length - sizeToCut);
+
+            if (_lastOffset > 0)
+                _lastOffset = _lastOffset - sizeToCut;
         }
 
         public Queue<Block<T>> GetBlocksSequentionally()
@@ -727,30 +715,13 @@ namespace DataStructures.DynamicHash
             }
         }
 
-        public void PreOrderTrie()
+        public void Clear()
         {
-            // Base Case 
-            if (_root == null)
-                return;
-
-            Stack<Node> nodeStack = new Stack<Node>();
-            nodeStack.Push(_root);
-
-            while (nodeStack.Count != 0)
-            {
-                // Pop the top item from stack and print it 
-                Node curr = nodeStack.Peek();
-                curr.VypisNode();
-                Console.WriteLine();
-
-                nodeStack.Pop();
-
-                // Push right and left children of the popped node to stack 
-                if ((curr as TrieInternNode)?.Right != null)
-                    nodeStack.Push((curr as TrieInternNode).Right);
-                if ((curr as TrieInternNode)?.Left != null)
-                    nodeStack.Push((curr as TrieInternNode).Left);
-            }
+            fs.SetLength(0);
+            Count = 0;
+            _root = new TrieExternNode(0, 0, null, false);
+            WriteBlockOnDisk(new Block<T>(0));
+            _freeBlocks = new SortedList<long>();
         }
     }
 }
