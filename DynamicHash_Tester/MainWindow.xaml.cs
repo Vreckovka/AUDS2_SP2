@@ -24,7 +24,7 @@ namespace DynamicHash_Tester
     /// </summary>
     public partial class MainWindow : Window
     {
-        static Random random = new Random(3);
+        static Random random = new Random(4);
         static Stopwatch stopwatch = new Stopwatch();
         private static List<Nehnutelnost> nehnutelnosts = new List<Nehnutelnost>();
         private static DynamicHash<Nehnutelnost> dynamicHash;
@@ -34,10 +34,10 @@ namespace DynamicHash_Tester
             InitializeComponent();
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
 
-            RandomOperation(100);
+            //RandomOperation(1);
             //dynamicHash.GetBlocksSequentionallyConsole();
             //SkontrolujeVsetkyPrvky();
-            //Test(100000);
+            Test(100000);
 
             //Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
@@ -90,20 +90,20 @@ namespace DynamicHash_Tester
         {
             for (int i = 0; i < pocetOperacii; i++)
             {
-                if (i == 39)
+                if (i == 36)
                     ;
                 RandomInsert();
-                //dynamicHash.GetBlocksSequentionallyConsole();
+               // dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
                 {
-                    //Console.WriteLine(i);
+                   // Console.WriteLine(i);
                     if (!RandomDelete())
                         throw new Exception("CHYBA");
                     //dynamicHash.GetBlocksSequentionallyConsole();
                    
                 }
                 ;
-                //Console.WriteLine(i);
+               // Console.WriteLine(i);
             }
         }
 
