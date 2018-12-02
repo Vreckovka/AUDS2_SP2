@@ -247,7 +247,7 @@ namespace DataStructures.DynamicHash
                         else
                         {
                             VytvorPreplnovaciBlock(data, foundBlock);
-                            ((TrieExternNode) current).BlockOffset = foundBlock.Offset;
+                            ((TrieExternNode)current).BlockOffset = foundBlock.Offset;
                             ((TrieExternNode)current).ValidCount = foundBlock.ValidCount;
 
                             return;
@@ -310,9 +310,9 @@ namespace DataStructures.DynamicHash
                                 blockLeft.NextOffset = foundBlock.NextOffset;
                                 blockLeft.ValidCountOfChain = foundBlock.ValidCountOfChain;
                                 blockLeft.SizeOfChain = foundBlock.SizeOfChain;
-                            }                     
+                            }
                         }
-                           
+
 
                         WriteBlockOnDisk(blockLeft);
                         WriteBlockOnDisk(blockRight);
@@ -347,7 +347,7 @@ namespace DataStructures.DynamicHash
                             }
 
                             TrieExternNode left = new TrieExternNode(-1, 0, (TrieInternNode)current, true);
-                            TrieExternNode right = new TrieExternNode(-1,0, (TrieInternNode)current, false);
+                            TrieExternNode right = new TrieExternNode(-1, 0, (TrieInternNode)current, false);
 
                             ((TrieInternNode)current).Left = left;
                             ((TrieInternNode)current).Right = right;
@@ -385,7 +385,7 @@ namespace DataStructures.DynamicHash
                             ((TrieInternNode)current).Left = left;
                             ((TrieInternNode)current).Right = right;
 
-                            
+
                             if (curPom == _root)
                             {
                                 _root = current;
@@ -551,7 +551,7 @@ namespace DataStructures.DynamicHash
                     Count--;
                     original.ValidCountOfChain--;
 
-                    Striasanie(original, block,ref node);
+                    Striasanie(original, block, ref node);
                     return true;
                 }
                 else
@@ -600,11 +600,81 @@ namespace DataStructures.DynamicHash
             return retazec;
         }
 
-        private void Striasanie(Block<T> original, Block<T> deleteBlock,ref TrieExternNode trieInternNode)
+        private void Striasanie(Block<T> original, Block<T> deleteBlock, ref TrieExternNode Node)
         {
             Block<T> current = deleteBlock;
             Block<T> poslednyBlok = null;
             bool striasaloSa = false;
+            bool spajiliSaNody = false;
+            TrieInternNode parent = (TrieInternNode)Node.Parent;
+            Block<T> final = null;
+
+            if (parent != null)
+            {
+                //Spajanie susednych nodnov
+                while ((parent.Right is TrieExternNode && parent.Left is TrieExternNode) &&
+                       (((TrieExternNode)parent.Right).ValidCount + ((TrieExternNode)parent.Left).ValidCount <=
+                        _blockCount))
+                {
+                    TrieInternNode grandParent = ((TrieInternNode)parent.Parent);
+                    if (((TrieExternNode) parent.Right).BlockOffset != -1 &&
+                        ((TrieExternNode) parent.Left).BlockOffset != -1)
+                    {
+                      
+                        Block<T> right = original;
+                        Block<T> left = original;                     
+
+                        if (Node.IsLeft)
+                            right = ReadBlockFromDisk(((TrieExternNode) parent.Right).BlockOffset);
+                        else
+                            left = ReadBlockFromDisk(((TrieExternNode) parent.Left).BlockOffset);
+
+                        final = left;
+                        //Ak nemaju preplnujuce bloky
+                        if (right.NextOffset == -1 && left.NextOffset == -1)
+                        {
+                            spajiliSaNody = true;
+                           
+                            foreach (var item in right.Records)
+                            {
+                                final.Add(item);
+                                final.ValidCountOfChain++;
+                            }
+
+                            if (grandParent.Left == parent)
+                            {
+                                TrieExternNode newNode =
+                                    new TrieExternNode(final.Offset, final.ValidCount, grandParent, true);
+                                grandParent.Left = newNode;
+                                Node = newNode;
+                            }
+                            else
+                            {
+                                TrieExternNode newNode =
+                                    new TrieExternNode(final.Offset, final.ValidCount, grandParent, false);
+                                grandParent.Right = newNode;
+                                Node = newNode;
+                            }
+
+                            if (right.Offset != _lastOffset)
+                                _freeBlocks.Add(right.Offset);
+                            else
+                                DeleteLastBlock();
+
+                            
+                        }
+
+                        original = final;
+                    }
+
+                    parent = grandParent;
+                   
+                }
+
+                if(spajiliSaNody)
+                    WriteBlockOnDisk(final);
+            }
+
             //Ak je mozne usetrit jeden blok
             if ((original.SizeOfChain + 1) * _blockCount >= original.ValidCountOfChain + _blockCount)
             {
@@ -665,42 +735,43 @@ namespace DataStructures.DynamicHash
 
                     original.SizeOfChain--;
                 }
-                else
+                else if (!spajiliSaNody)
                 {
-                    trieInternNode.ValidCount = 0;
-                    trieInternNode.BlockOffset = -1;
+                    Node.ValidCount = 0;
+                    Node.BlockOffset = -1;
                 }
 
             }
 
+            if (!spajiliSaNody)
+            {
+                //Ak sa neztriasalo
+                if (current.Records.Count > 0 && deleteBlock != original && !striasaloSa)
+                {
+                    WriteBlockOnDisk(deleteBlock);
+                }
+                //Ak sa striaslo tak count je 0, lebo sa to presypalo aby bol posledny przadny
+                else if (poslednyBlok == null && striasaloSa)
+                {
+                    if (current.Offset != _lastOffset)
+                        _freeBlocks.Add(current.Offset);
+                    else
+                        DeleteLastBlock();
+                }
+                else if (striasaloSa)
+                {
+                    if (poslednyBlok.Offset != _lastOffset)
+                        _freeBlocks.Add(deleteBlock.Offset);
+                    else
+                        DeleteLastBlock();
+                }
 
-            //Ak sa neztriasalo
-            if (current.Records.Count > 0 && deleteBlock != original && !striasaloSa)
-            {
-                WriteBlockOnDisk(deleteBlock);
-            }
-            //Ak sa striaslo tak count je 0, lebo sa to presypalo aby bol posledny przadny
-            else if (poslednyBlok == null && striasaloSa)
-            {
-                if (current.Offset != _lastOffset)
-                    _freeBlocks.Add(current.Offset);
-                else
-                    DeleteLastBlock();
-            }
-            else if (striasaloSa)
-            {
-
-                if (poslednyBlok.Offset != _lastOffset)
-                    _freeBlocks.Add(deleteBlock.Offset);
-                else
-                    DeleteLastBlock();
-            }
-
-            //Zapisat original ak nie je prazdny retazec
-            if (trieInternNode.BlockOffset != -1)
-            {
-                trieInternNode.ValidCount = original.ValidCount;
-                WriteBlockOnDisk(original);
+                //Zapisat original ak nie je prazdny retazec
+                if (Node.BlockOffset != -1 && !spajiliSaNody)
+                {
+                    Node.ValidCount = original.ValidCount;
+                    WriteBlockOnDisk(original);
+                }
             }
         }
 
