@@ -37,7 +37,7 @@ namespace DynamicHash_Tester
             //RandomOperation(1);
             //dynamicHash.GetBlocksSequentionallyConsole();
             //SkontrolujeVsetkyPrvky();
-            Test(100000);
+            //Test(100000);
 
             //Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();

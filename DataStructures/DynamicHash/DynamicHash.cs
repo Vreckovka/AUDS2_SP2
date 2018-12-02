@@ -570,7 +570,8 @@ namespace DataStructures.DynamicHash
                 offset = GetBlock(key, ref node);
 
             //TODO: Osetrit ked uzivatel zada zle data a dany block neni platny shodou okolnosti
-
+            if (offset == -1)
+                return false;
             Block<T> block = ReadBlockFromDisk(offset);
             var original = block;
 
