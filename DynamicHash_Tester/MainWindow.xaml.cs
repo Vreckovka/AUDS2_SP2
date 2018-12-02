@@ -34,10 +34,10 @@ namespace DynamicHash_Tester
             InitializeComponent();
             dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
 
-            //RandomOperation(100);
+            RandomOperation(100);
             //dynamicHash.GetBlocksSequentionallyConsole();
             //SkontrolujeVsetkyPrvky();
-            Test(100000);
+            //Test(100000);
 
             //Console.WriteLine(dynamicHash.Count);
             DrawBlocksSequentionally();
