@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace DataStructures.DynamicHash
 {
-    public interface IHashRecord
+    public interface IByteRecord
     {
-        int GetHash();
+        byte[] ToByteArray();
+        void FromByteArray(byte[] byteArray);
+        int GetSizeOfByteArray();
     }
 }

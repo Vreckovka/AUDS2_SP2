@@ -5,10 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using DataStructures.DynamicHash;
 
-namespace DynamicHash_Tester
+namespace SmestralnaPraca2.Core
 {
-    class Nehnutelnost : IByteRecord,IHashRecord, IComparable<Nehnutelnost>
+    class Nehnutelnost : IByteRecord
     {
+       public int SupisneCislo { get; set; }
+        public string NazovKatastra { get; set; }
+        public string Popis { get; set; }
+        public int Id { get; set; }
+
         public Nehnutelnost()
         {
 
@@ -31,12 +36,7 @@ namespace DynamicHash_Tester
             Id = id;
         }
 
-        public int SupisneCislo { get; set; }
-        public string NazovKatastra { get; set; }
-        public string Popis { get; set; }
-        public int Id { get; set; }
-
-        public byte[] ToByteArray()
+        public virtual byte[] ToByteArray()
         {
             byte[] byteArray = new byte[GetSizeOfByteArray()];
 
@@ -63,7 +63,7 @@ namespace DynamicHash_Tester
             return byteArray;
         }
 
-        public void FromByteArray(byte[] byteArray)
+        public virtual void FromByteArray(byte[] byteArray)
         {
             SupisneCislo = BitConverter.ToInt32(byteArray, 0);
 
@@ -90,48 +90,32 @@ namespace DynamicHash_Tester
             Id = BitConverter.ToInt32(byteArray, 4 + (15 * 2) + (20 * 2));
         }
 
-        public int GetHash()
-        {
-            return Id % 10;
-        }
 
-        public int GetSizeOfByteArray()
+        public virtual int GetSizeOfByteArray()
         {
             return 78;
         }
 
-        public override bool Equals(object other)
-        {
-            if (((Nehnutelnost)other).Id == Id)
-                return true;
-            else
-                return false;
-        }
 
-        public void VypisNehnutelnost()
+        public virtual void VypisNehnutelnost()
         {
-            Console.WriteLine($"Supisne cislo: {SupisneCislo}\n" +
-                              $"Nazov katastra: {NazovKatastra}\n" +
-                              $"Popis: {Popis}\n" +
-                              $"ID: {Id}\n");
-        }
-
-        public int CompareTo(Nehnutelnost other)
-        {
-            if (Id < other.Id)
-                return 1;
-            else if (Id > other.Id)
-                return -1;
-            else
-                return 0;
+            Console.WriteLine($"ID: {Id} " +
+                     $"Supisne cislo: {SupisneCislo} " +
+                     $"Nazov katastra: {NazovKatastra} " +
+                     $"Popis: {Popis} ");
         }
 
         public override string ToString()
         {
-            return $"Supisne cislo: {SupisneCislo} " +
-                   $"Nazov katastra: {NazovKatastra} " +
-                   $"Popis: {Popis} " +
-                   $"ID: {Id} ";
+            return $"ID: {Id} " +
+                     $"Supisne cislo: {SupisneCislo} " +
+                     $"Nazov katastra: {NazovKatastra} " +
+                     $"Popis: {Popis} ";
+
         }
     }
 }
+
+
+
+

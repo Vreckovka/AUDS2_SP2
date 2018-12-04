@@ -6,7 +6,7 @@ using DataStructures.SortedList;
 
 namespace DataStructures.DynamicHash
 {
-    public class DynamicHash<T> where T : IHashRecord, IComparable<T>, new()
+    public class DynamicHash<T> where T : IHashRecord, IByteRecord, IComparable<T>, new()
     {
         private int _depth;
         private Node _root;
@@ -17,7 +17,8 @@ namespace DataStructures.DynamicHash
         private FileStream fs;
         public SortedList<long> _freeBlocks;
         public int Count { get; set; }
-        public DynamicHash(int blockCount, string pathOfFile)
+        private int sizeOfHash;
+        public DynamicHash(int blockCount,int sizeOfHash, string pathOfFile)
         {
             _blockCount = blockCount;
             _sizeOfRecord = new T().GetSizeOfByteArray();
@@ -26,6 +27,7 @@ namespace DataStructures.DynamicHash
             _blockSize = (blockCount * _sizeOfRecord) + Block<T>.HeadSize;
             WriteBlockOnDisk(new Block<T>(0));
             _freeBlocks = new SortedList<long>();
+            this.sizeOfHash = sizeOfHash;
         }
 
 
@@ -237,7 +239,7 @@ namespace DataStructures.DynamicHash
                     foreach (T item in items)
                     {
                         BitArray hashT = new BitArray(new int[] { item.GetHash() });
-                        if (indexOfDepth < hashT.Count - 1)
+                        if (indexOfDepth < sizeOfHash)
                             if (hashT[indexOfDepth] == false)
                             {
                                 blockLeft.Add(item);
@@ -419,6 +421,24 @@ namespace DataStructures.DynamicHash
 
                             _root = current;
 
+                            current = new TrieInternNode();
+
+                            left = new TrieExternNode(-1, 0, (TrieInternNode)current, true);
+                            right = new TrieExternNode(-1, 0, (TrieInternNode)current, false);
+
+                            ((TrieInternNode)current).Left = left;
+                            ((TrieInternNode)current).Right = right;
+
+                            if (blockRight.ValidCount > blockLeft.ValidCount)
+                            {
+                                ((TrieInternNode)_root).Right = current;
+                            }
+                            else
+                            {
+                                ((TrieInternNode)_root).Left = current;
+
+                            }
+                            current.Parent = _root;
 
                         }
                         indexOfDepth++;
@@ -859,11 +879,39 @@ namespace DataStructures.DynamicHash
 
         public void Clear()
         {
+            _lastOffset = 0;
             fs.SetLength(0);
             Count = 0;
             _root = new TrieExternNode(0, 0, null, false);
             WriteBlockOnDisk(new Block<T>(0));
             _freeBlocks = new SortedList<long>();
+        }
+
+        public void preOrder()
+        {
+            // Base Case 
+            if (_root == null)
+                return;
+
+            // Create an empty stack and push root to it 
+            Stack<Node> nodeStack = new Stack<Node>();
+            nodeStack.Push(_root);
+            while (nodeStack.Count != 0)
+            {
+                // Pop the top item from stack and print it 
+                Node curr = nodeStack.Peek();
+                curr.VypisNode();
+                Console.WriteLine();
+
+                nodeStack.Pop();
+
+                // Push right and left children of the popped node to stack 
+                if ((curr is TrieInternNode) && ((TrieInternNode)curr).Right != null)
+                    nodeStack.Push(((TrieInternNode)curr).Right);
+                if ((curr is TrieInternNode) && ((TrieInternNode)curr).Left != null)
+                    nodeStack.Push(((TrieInternNode)curr).Left);
+
+            }
         }
     }
 }

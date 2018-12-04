@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="DynamicHash\Block.cs" />
     <Compile Include="DynamicHash\DynamicHash.cs" />
+    <Compile Include="DynamicHash\IByteRecord.cs" />
     <Compile Include="DynamicHash\IHashRecord.cs" />
     <Compile Include="DynamicHash\Node.cs" />
     <Compile Include="DynamicHash\TrieExternNode.cs" />

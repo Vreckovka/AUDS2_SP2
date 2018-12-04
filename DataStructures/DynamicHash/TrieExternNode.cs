@@ -21,9 +21,9 @@ namespace DataStructures.DynamicHash
 
         public override void VypisNode()
         {
-            //Console.WriteLine($"TRIE EXTERN:\n" +
-            //                  $"Block offset {BlockOffset}\n" +
-            //                  $"Valid count {ValidCount}\n");
+            Console.WriteLine($"TRIE EXTERN:\n" +
+                              $"Block offset {BlockOffset}\n" +
+                              $"Valid count {ValidCount}\n");
         }
 
         public override string ToString()

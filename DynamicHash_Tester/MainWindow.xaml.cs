@@ -32,31 +32,26 @@ namespace DynamicHash_Tester
         public MainWindow()
         {
             InitializeComponent();
-            dynamicHash = new DynamicHash<Nehnutelnost>(3, "Nehnutelnosti.bin");
+            dynamicHash = new DynamicHash<Nehnutelnost>(3, 10,"Nehnutelnosti.bin");
 
-            //RandomOperation(1);
-            //dynamicHash.GetBlocksSequentionallyConsole();
-            //SkontrolujeVsetkyPrvky();
-            //Test(100000);
-
-            //Console.WriteLine(dynamicHash.Count);
+            Test(1000000);
             DrawBlocksSequentionally();
-            // dynamicHash.GetBlocksSequentionallyConsole();
         }
 
         public static void Test(int count)
         {
             for (int i = 0; i < count; i++)
             {
-                if (i == 1230)
-                    ;
                 Console.WriteLine($"TEST: {i}");
                 random = new Random(i);
-                RandomOperation(100);
+                RandomOperation(1000);
                 SkontrolujeVsetkyPrvky();
 
-                dynamicHash.Clear();
-                nehnutelnosts.Clear();
+                if (i != count - 1)
+                {
+                    dynamicHash.Clear();
+                    nehnutelnosts.Clear();
+                }
             }
         }
         private static Nehnutelnost[] nehnutelnostiPole = new Nehnutelnost[]
@@ -90,8 +85,6 @@ namespace DynamicHash_Tester
         {
             for (int i = 0; i < pocetOperacii; i++)
             {
-                if (i == 36)
-                    ;
                 RandomInsert();
                // dynamicHash.GetBlocksSequentionallyConsole();
                 if (random.Next(0, 100) > 40)
@@ -121,8 +114,6 @@ namespace DynamicHash_Tester
             int supCislo = random.Next(0, 1000);
             Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, dynamicHash.Count);
 
-            if (supCislo == 179 && dynamicHash.Count == 22)
-                ;
             dynamicHash.Add(nehnutelnost);
             nehnutelnosts.Add(nehnutelnost);
             _pocet++;
