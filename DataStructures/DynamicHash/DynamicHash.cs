@@ -18,7 +18,7 @@ namespace DataStructures.DynamicHash
         public SortedList<long> _freeBlocks;
         public int Count { get; set; }
         private int sizeOfHash;
-        public DynamicHash(int blockCount,int sizeOfHash, string pathOfFile)
+        public DynamicHash(int blockCount, int sizeOfHash, string pathOfFile)
         {
             _blockCount = blockCount;
             _sizeOfRecord = new T().GetSizeOfByteArray();
@@ -246,15 +246,10 @@ namespace DataStructures.DynamicHash
                             }
                             else
                                 blockRight.Add(item);
-                        else
-                        {
-                            VytvorPreplnovaciBlock(data, foundBlock);
-                            ((TrieExternNode)current).BlockOffset = foundBlock.Offset;
-                            ((TrieExternNode)current).ValidCount = foundBlock.ValidCount;
 
-                            return;
-                        }
                     }
+
+
 
                     if (blockLeft.ValidCount + blockRight.ValidCount < _blockCount + 1)
                     {
@@ -325,7 +320,7 @@ namespace DataStructures.DynamicHash
 
                         break;
                     }
-                    else
+                    else if (indexOfDepth != sizeOfHash - 1)
                     {
                         if (_root is TrieInternNode)
                             if (blockRight.ValidCount > blockLeft.ValidCount)
@@ -442,6 +437,23 @@ namespace DataStructures.DynamicHash
 
                         }
                         indexOfDepth++;
+                    }
+                    else
+
+                    {
+                        TrieInternNode parent = (TrieInternNode)current.Parent;
+                        if (blockRight.ValidCount > blockLeft.ValidCount)
+                        {
+                            current = parent.Right;
+                        }
+                        else
+                            current = parent.Left;
+
+                        VytvorPreplnovaciBlock(data, foundBlock);
+                        ((TrieExternNode)current).BlockOffset = foundBlock.Offset;
+                        ((TrieExternNode)current).ValidCount = foundBlock.ValidCount;
+
+                        return;
                     }
                 }
             }
@@ -589,9 +601,10 @@ namespace DataStructures.DynamicHash
             else
                 offset = GetBlock(key, ref node);
 
-            //TODO: Osetrit ked uzivatel zada zle data a dany block neni platny shodou okolnosti
+            //Nenasiel sa blok
             if (offset == -1)
                 return false;
+
             Block<T> block = ReadBlockFromDisk(offset);
             var original = block;
 

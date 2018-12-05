@@ -32,9 +32,9 @@ namespace DynamicHash_Tester
         public MainWindow()
         {
             InitializeComponent();
-            dynamicHash = new DynamicHash<Nehnutelnost>(3, 10,"Nehnutelnosti.bin");
+            dynamicHash = new DynamicHash<Nehnutelnost>(3, 5,"Nehnutelnosti.bin");
 
-            Test(1000000);
+            Test(10);
             DrawBlocksSequentionally();
         }
 
@@ -85,15 +85,16 @@ namespace DynamicHash_Tester
         {
             for (int i = 0; i < pocetOperacii; i++)
             {
+                    
                 RandomInsert();
-               // dynamicHash.GetBlocksSequentionallyConsole();
+               // 
                 if (random.Next(0, 100) > 40)
                 {
                    // Console.WriteLine(i);
                     if (!RandomDelete())
                         throw new Exception("CHYBA");
                     //dynamicHash.GetBlocksSequentionallyConsole();
-                   
+
                 }
                 ;
                // Console.WriteLine(i);
