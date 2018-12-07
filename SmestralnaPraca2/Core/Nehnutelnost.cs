@@ -9,7 +9,7 @@ namespace SmestralnaPraca2.Core
 {
     class Nehnutelnost : IByteRecord
     {
-       public int SupisneCislo { get; set; }
+        public int SupisneCislo { get; set; }
         public string NazovKatastra { get; set; }
         public string Popis { get; set; }
         public int Id { get; set; }
@@ -34,6 +34,25 @@ namespace SmestralnaPraca2.Core
 
 
             Id = id;
+        }
+
+        public string[] ToStringArray()
+        {
+            string[] array = new string[4];
+            array[0] = Id.ToString();
+            array[1] = SupisneCislo.ToString();
+            array[2] = NazovKatastra;
+            array[3] = Popis;
+
+            return array;
+        }
+
+        public void FromStringArray(string[] array)
+        {
+            Id = Convert.ToInt32(array[0]);
+            SupisneCislo = Convert.ToInt32(array[1]);
+            NazovKatastra = array[2];
+            Popis = array[3];
         }
 
         public virtual byte[] ToByteArray()

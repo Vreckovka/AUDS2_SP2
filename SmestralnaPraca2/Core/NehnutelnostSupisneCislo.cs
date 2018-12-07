@@ -63,7 +63,12 @@ namespace SmestralnaPraca2.Core
             byte[] pom = (Encoding.ASCII.GetBytes(NazovKatastra));
 
             Array.Copy(supByte, 0, byteArray, 3, 1);
-            Array.Copy(pom, 0, byteArray, 0, 3);
+
+            if (pom.Length <= 3)
+                Array.Copy(pom, 0, byteArray, 0, pom.Length);
+            else
+                Array.Copy(pom, 0, byteArray, 0,3);
+
             int hash = BitConverter.ToInt32(byteArray, 0);
 
             return hash;

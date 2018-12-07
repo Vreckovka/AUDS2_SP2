@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DataStructures.DynamicHash
 {
-   public class Block<T> where T : IHashRecord, IComparable<T>, new()
+    public class Block<T> where T : IHashRecord, IComparable<T>, new()
     {
         public bool IsValid { get; set; }
         public int ValidCount { get; set; }
@@ -81,8 +81,8 @@ namespace DataStructures.DynamicHash
             }
         }
 
-        public T Find(T key)
-        {           
+        public T Find(T key, ref int index)
+        {
             if (Records.Count == 0)
             {
                 return default(T);
@@ -100,7 +100,11 @@ namespace DataStructures.DynamicHash
                     int vysledok = current.CompareTo(key);
 
                     if (current.Equals(key))
+                    {
+                        index = acutalIndex;
                         return Records[acutalIndex];
+                    }
+                       
 
                     if (max == min)
                         return default(T);
@@ -123,17 +127,19 @@ namespace DataStructures.DynamicHash
             }
         }
 
-        public bool Delete(T key)
+        public T Delete(T key)
         {
-            T najdene = Find(key);
+            int index = -1;
+            T najdene = Find(key, ref index);
             if (najdene != null && najdene.Equals(key))
             {
                 ValidCount--;
-                Records.Remove(key);
-                return true;
+                Records.RemoveAt(index);
+
+                return najdene;
             }
             else
-                return false;
+                return default(T);
         }
 
         public override string ToString()

@@ -5,8 +5,158 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmestralnaPraca2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed">
+    <Window.Resources>
+        <Style TargetType="Label" x:Key="Label_Nadpis">
+            <Setter Property="FontSize" Value="25" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontFamily" Value="Lato" />
+            <Setter Property="Foreground" Value="#FFFF5C5C" />
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Label}">
+                        <Border  Name="Border" Background="{TemplateBinding Background}" >
+                            <ContentPresenter Content="{TemplateBinding Content}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="Foreground" Value="#FFFF2727"></Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="NehnutelnostDataTemplate">
+            <StackPanel >
+                <Label Content="Informácie o nehnuteľnosti" Style="{DynamicResource Label_Nadpis}" />
+
+                <TextBlock Margin="5,0,0,0">
+                    <Run Text="ID: " FontWeight="Bold" FontSize="15"/>
+                    <Run Text="{Binding [0]}" FontSize="15"/>
+                </TextBlock>
+
+                <TextBlock Margin="5,0,0,0">
+                    <Run Text="Súpisné číslo: " FontWeight="Bold" FontSize="15"/>
+                    <Run Text="{Binding [1]}" FontSize="15"/>
+                </TextBlock>
+
+                <TextBlock Margin="5,0,0,0">
+                    <Run Text="Názov katastrálneho územia: " FontWeight="Bold" FontSize="15"/>
+                    <Run Text="{Binding [2]}" FontSize="15"/>
+                </TextBlock>
+
+                <TextBlock Margin="5,0,0,0">
+                    <Run Text="Popis: " FontWeight="Bold" FontSize="15"/>
+                    <Run Text="{Binding [3], StringFormat={}{0:dd/MM/yyyy}}" FontSize="15"/>
+                </TextBlock>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+    
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <Menu>
+            <MenuItem Header="Súbor">
+                <MenuItem Header="Náčítaj súbor"/>
+                <MenuItem Header="Náčítaj ako nový súbor"/>
+                <MenuItem Header="Vygeneruj údaje"/>
+            </MenuItem>
+
+            <MenuItem Header="Sekvenčný výpis">
+                <MenuItem Header="Dynamic Hash by ID" Click="SekvencnyVypisID_Click"/>
+                <MenuItem Header="Dynamic Hash by Supisne cislo a nazov katastra" Click="SekvencnyVypisSupCislo_Click"/>
+                <MenuItem Header="Random access file" Click="SekvencnyVypisRAC_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Content="ID"/>
+                <TextBox  Grid.Column="1" Margin="5" x:Name="TextBox_ID"/>
+
+                <Label Content="Súpisné číslo"  Grid.Column="2" />
+                <TextBox  Grid.Column="3"  Margin="5"  x:Name="TextBox_SupisneCislo"/>
+
+                <Label Content="Názov katastrálneho územia"  Grid.Column="4"/>
+                <TextBox  Grid.Column="5"  Margin="5"  x:Name="TextBox_NazovKatastra"/>
+
+                <Button Content="Vyhľadaj" x:Name="Button_Vyhaladaj"  Grid.Column="6"  Margin="5" Click="Button_Vyhaladaj_Click" />
+            </Grid>
+        </Grid>
+
+        <Separator Grid.Row="2"/>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ContentPresenter  ContentTemplate="{DynamicResource NehnutelnostDataTemplate}" x:Name="Content_VyhladanaNehnutelnost"/>
+            <Button Content="Odstráň nehnuteľnosť" x:Name="Button_Odstan"  Margin="5" Click="Button_Odstan_Click" Grid.Column="1" Height="{Binding ElementName=Button_Pridaj, Path=ActualHeight}"/>
+        </Grid>
+
+        <Separator Grid.Row="4"/>
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Content="ID" Grid.Row="0"/>
+                <TextBox  Margin="5" x:Name="TextBox_IDZmena" Grid.Column="1"  Grid.Row="0"/>
+
+                <Label Content="Súpisné číslo"  Grid.Row="1"/>
+                <TextBox   Margin="5" x:Name="TextBox_SupZmena" Grid.Column="1"  Grid.Row="1"/>
+
+
+                <Label Content="Názov katastrálneho územia"  Grid.Row="2"/>
+                <TextBox   Margin="5" x:Name="TextBox_KatZmena" Grid.Column="1"  Grid.Row="2"/>
+
+                <Label Content="Popis"  Grid.Row="3"/>
+                <TextBox   Margin="5" x:Name="TextBox_PopisZmena" Grid.Column="1"  Grid.Row="3"/>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Button Content="Pridaj nehnuteľnosť" x:Name="Button_Pridaj"  Margin="5" Click="Button_Pridaj_Click" Grid.Row="0"/>
+                <Button Content="Zmeň údaje" x:Name="Button_Zmen"  Margin="5" Click="Button_Zmen_Click" Grid.Row="1"/>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

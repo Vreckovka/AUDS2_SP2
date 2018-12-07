@@ -32,7 +32,7 @@ namespace DynamicHash_Tester
         public MainWindow()
         {
             InitializeComponent();
-            dynamicHash = new DynamicHash<Nehnutelnost>(3, 5,"Nehnutelnosti.bin");
+            dynamicHash = new DynamicHash<Nehnutelnost>(3, 5, "Nehnutelnosti.bin");
 
             Test(10);
             DrawBlocksSequentionally();
@@ -44,13 +44,14 @@ namespace DynamicHash_Tester
             {
                 Console.WriteLine($"TEST: {i}");
                 random = new Random(i);
-                RandomOperation(1000);
+                RandomOperation(100);
                 SkontrolujeVsetkyPrvky();
 
                 if (i != count - 1)
                 {
                     dynamicHash.Clear();
                     nehnutelnosts.Clear();
+                    _pocet = 0;
                 }
             }
         }
@@ -75,7 +76,7 @@ namespace DynamicHash_Tester
         {
             foreach (var item in nehnutelnosts)
             {
-               var vysledok = dynamicHash.Find(new Nehnutelnost(-1,"","",item.Id));
+                var vysledok = dynamicHash.Find(new Nehnutelnost(-1, "", "", item.Id));
                 if (vysledok == null)
                     throw new Exception("Nesedia prvky");
             }
@@ -85,19 +86,14 @@ namespace DynamicHash_Tester
         {
             for (int i = 0; i < pocetOperacii; i++)
             {
-                    
+
                 RandomInsert();
-               // 
                 if (random.Next(0, 100) > 40)
                 {
-                   // Console.WriteLine(i);
-                    if (!RandomDelete())
+                    if (RandomDelete() == null)
                         throw new Exception("CHYBA");
-                    //dynamicHash.GetBlocksSequentionallyConsole();
 
                 }
-                ;
-               // Console.WriteLine(i);
             }
         }
 
@@ -113,14 +109,14 @@ namespace DynamicHash_Tester
         public static void RandomInsert()
         {
             int supCislo = random.Next(0, 1000);
-            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, dynamicHash.Count);
+            Nehnutelnost nehnutelnost = new Nehnutelnost(supCislo, mesta[random.Next(0, mesta.Length)], "POPIS: " + supCislo, _pocet);
 
             dynamicHash.Add(nehnutelnost);
             nehnutelnosts.Add(nehnutelnost);
             _pocet++;
         }
 
-        public static bool RandomDelete()
+        public static Nehnutelnost RandomDelete()
         {
             int index = random.Next(0, nehnutelnosts.Count);
             var bla = dynamicHash.Delete(nehnutelnosts[index]);
@@ -141,7 +137,6 @@ namespace DynamicHash_Tester
 
         private void DrawBlock(Block<Nehnutelnost> nehnutelnosts)
         {
-
             Dispatcher.Invoke(() =>
             {
                 GroupBox block = new GroupBox() { Header = $"Offset: {nehnutelnosts.Offset}" };

@@ -28,16 +28,7 @@ namespace SmestralnaPraca2.Core
                     Nehnutelnost nehnutelnost = new Nehnutelnost(j,
                         mesta[i], "POPIS: " + RandomString(5), coreMain.randomAccessFile.Count);
 
-                    var offset = coreMain.randomAccessFile.Add(nehnutelnost);
-                    //coreMain.dynamicHashId.Add(new NehnutelnostID() { Id = nehnutelnost.Id, offset = offset });
-                    NehnutelnostSupisneCislo nehnutelnostSupisneCislo = new NehnutelnostSupisneCislo()
-                    {
-                        SupisneCislo = nehnutelnost.SupisneCislo,
-                        NazovKatastra = nehnutelnost.NazovKatastra,
-                        offset = offset
-                    };
-
-                    coreMain.dynamicHashSup.Add(nehnutelnostSupisneCislo);
+                    coreMain.PridajNehnutelnost(nehnutelnost);
                 }
             }
         }

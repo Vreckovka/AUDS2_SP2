@@ -508,13 +508,17 @@ namespace DataStructures.DynamicHash
             else
                 current = _root as TrieExternNode;
 
+            if (((TrieExternNode) current).BlockOffset == -1)
+                return default(T);
+
             var foundBlock = ReadBlockFromDisk(((TrieExternNode)current).BlockOffset);
             int sizeOfChain = foundBlock.SizeOfChain;
+            int index = -1;
             T found = default(T);
 
             for (i = 0; i < sizeOfChain + 1; i++)
             {
-                found = foundBlock.Find(key);
+                found = foundBlock.Find(key,ref index);
                 if (found != null)
                     break;
                 if (foundBlock.NextOffset != -1)
@@ -586,7 +590,7 @@ namespace DataStructures.DynamicHash
                 return -1;
         }
 
-        public bool Delete(T key)
+        public T Delete(T key)
         {
             TrieExternNode node = null;
             long offset = -1;
@@ -596,37 +600,37 @@ namespace DataStructures.DynamicHash
                 offset = ((TrieExternNode)_root).BlockOffset;
 
                 if (offset == -1)
-                    return false;
+                    return default(T);
             }
             else
                 offset = GetBlock(key, ref node);
 
             //Nenasiel sa blok
             if (offset == -1)
-                return false;
+                return default(T);
 
             Block<T> block = ReadBlockFromDisk(offset);
             var original = block;
 
             do
             {
-                bool vysledok = block.Delete(key);
+                T vysledok = block.Delete(key);
 
-                if (vysledok)
+                if (vysledok != null)
                 {
                     //Vseobecne podmienky
                     Count--;
                     original.ValidCountOfChain--;
 
                     Striasanie(original, block, ref node);
-                    return true;
+                    return vysledok;
                 }
                 else
                 {
                     if (block.NextOffset != -1)
                         block = ReadBlockFromDisk(block.NextOffset);
                     else
-                        return false;
+                        return default(T);
                 }
 
             } while (true);

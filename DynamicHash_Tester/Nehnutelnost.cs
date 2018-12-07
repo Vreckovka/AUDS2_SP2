@@ -7,7 +7,7 @@ using DataStructures.DynamicHash;
 
 namespace DynamicHash_Tester
 {
-    class Nehnutelnost : IByteRecord,IHashRecord, IComparable<Nehnutelnost>
+    public class Nehnutelnost : IByteRecord,IHashRecord, IComparable<Nehnutelnost>
     {
         public Nehnutelnost()
         {
