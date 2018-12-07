@@ -47,44 +47,50 @@ namespace SmestralnaPraca2
 
         public void DrawBlocksSequentionally(object fileAccessStrucuture, int IDOfStructure)
         {
-            switch (IDOfStructure)
+            if(fileAccessStrucuture != null)
             {
-                case 0:
-                    Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
+                switch (IDOfStructure)
+                {
+                    case 0:
+                        Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
 
-                    var fileAccessStrucutureQueue = ((RandomAccessFile<Nehnutelnost>)fileAccessStrucuture).GetBlocksSequentionally();
+                        var fileAccessStrucutureQueue = ((RandomAccessFile<Nehnutelnost>) fileAccessStrucuture)
+                            .GetBlocksSequentionally();
 
-                    foreach (KeyValuePair<Nehnutelnost, long> keyValuePair in fileAccessStrucutureQueue)
-                    {
-                        DrawElement((RandomAccessFile<Nehnutelnost>)fileAccessStrucuture, keyValuePair);
-                    }
+                        foreach (KeyValuePair<Nehnutelnost, long> keyValuePair in fileAccessStrucutureQueue)
+                        {
+                            DrawElement((RandomAccessFile<Nehnutelnost>) fileAccessStrucuture, keyValuePair);
+                        }
 
-                    break;
+                        break;
 
-                case 1:
-                    Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
+                    case 1:
+                        Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
 
-                    var queueID = ((DynamicHash<NehnutelnostID>)fileAccessStrucuture).GetBlocksSequentionally();
+                        var queueID = ((DynamicHash<NehnutelnostID>) fileAccessStrucuture).GetBlocksSequentionally();
 
-                    foreach (Block<NehnutelnostID> block in queueID)
-                    {
-                        DrawBlock(block, IDOfStructure, (DynamicHash<NehnutelnostID>)fileAccessStrucuture);
-                    }
+                        foreach (Block<NehnutelnostID> block in queueID)
+                        {
+                            DrawBlock(block, IDOfStructure, (DynamicHash<NehnutelnostID>) fileAccessStrucuture);
+                        }
 
-                    break;
-                case 2:
-                    Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
+                        break;
+                    case 2:
+                        Dispatcher.Invoke(() => { Canvas_Main.Children.Clear(); });
 
-                    var queueSup = ((DynamicHash<NehnutelnostSupisneCislo>)fileAccessStrucuture).GetBlocksSequentionally();
+                        var queueSup = ((DynamicHash<NehnutelnostSupisneCislo>) fileAccessStrucuture)
+                            .GetBlocksSequentionally();
 
-                    foreach (Block<NehnutelnostSupisneCislo> block in queueSup)
-                    {
-                        DrawBlock(block, IDOfStructure, (DynamicHash<NehnutelnostSupisneCislo>)fileAccessStrucuture);
-                    }
+                        foreach (Block<NehnutelnostSupisneCislo> block in queueSup)
+                        {
+                            DrawBlock(block, IDOfStructure,
+                                (DynamicHash<NehnutelnostSupisneCislo>) fileAccessStrucuture);
+                        }
 
-                    break;
-                default:
-                    throw new ArgumentException("Invalid argument");
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid argument");
+                }
             }
         }
 

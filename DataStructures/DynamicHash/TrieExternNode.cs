@@ -30,5 +30,10 @@ namespace DataStructures.DynamicHash
         {
             return $"TrieExternNode offset: {BlockOffset}";
         }
+
+        public override string SaveNode()
+        {
+            return $"{BlockOffset};{ValidCount}";
+        }
     }
 }

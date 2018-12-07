@@ -11,7 +11,7 @@ namespace DataStructures.SortedList
         public int Count { get; set; }
         public T Last { get; set; }
         public T Peek { get; set; }
-        private List<T> _records = new List<T>();
+        public List<T> _records = new List<T>();
 
         public void Add(T data)
         {

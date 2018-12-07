@@ -11,5 +11,10 @@ namespace DataStructures.DynamicHash
         public Node Parent { get; set; }
 
         public virtual void VypisNode() { }
+
+        public virtual string SaveNode()
+        {
+            return "";
+        }
     }
 }

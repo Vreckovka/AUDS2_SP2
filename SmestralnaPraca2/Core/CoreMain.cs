@@ -16,9 +16,27 @@ namespace SmestralnaPraca2.Core
 
         public CoreMain()
         {
+        }
+
+        public void LoadFiles()
+        {
+            randomAccessFile = new RandomAccessFile<Nehnutelnost>("../../Files/data.bin", false);
+            dynamicHashId = new DynamicHash<NehnutelnostID>(3, 32, "../../Files/nehnutelnostiID.bin", false);
+            dynamicHashSup = new DynamicHash<NehnutelnostSupisneCislo>(3, 32, "../../Files/nehnutelnostiSupCislo.bin", false);
+        }
+
+        public void CreateFiles()
+        {
             randomAccessFile = new RandomAccessFile<Nehnutelnost>("../../Files/data.bin", true);
-            dynamicHashId = new DynamicHash<NehnutelnostID>(3, 32,"../../Files/nehnutelnostiID.bin");
-            dynamicHashSup = new DynamicHash<NehnutelnostSupisneCislo>(3, 32,"../../Files/nehnutelnostiSupCislo.bin");
+            dynamicHashId = new DynamicHash<NehnutelnostID>(3, 32, "../../Files/nehnutelnostiID.bin", true);
+            dynamicHashSup = new DynamicHash<NehnutelnostSupisneCislo>(3, 32, "../../Files/nehnutelnostiSupCislo.bin", true);
+        }
+
+        public void SaveFiles()
+        {
+            randomAccessFile.Save();
+            dynamicHashId.Save();
+            dynamicHashSup.Save();
         }
 
         public string[] FindNehnutelnost(int id)
@@ -68,7 +86,8 @@ namespace SmestralnaPraca2.Core
             dynamicHashId.Delete(new NehnutelnostID()
                 {Id = nehnutelnost.Id});
 
-            randomAccessFile._freeBlocks.Add(nehnutelnostSup.offset);
+            randomAccessFile.Delete(nehnutelnostSup.offset);
+           
         }
 
         public void ZmenUdaje(int id, string[] udaje)
@@ -81,8 +100,7 @@ namespace SmestralnaPraca2.Core
             var nehnutelnostRAC = randomAccessFile.ReadDataFromFile(nehnutelnostId.offset);
             dynamicHashSup.Delete(new NehnutelnostSupisneCislo() { SupisneCislo = nehnutelnostRAC.SupisneCislo, NazovKatastra = nehnutelnostRAC.NazovKatastra });
 
-            randomAccessFile._freeBlocks.Add(nehnutelnostId.offset);
-
+            randomAccessFile.Delete(nehnutelnostId.offset);
 
             Nehnutelnost nehnutelnost = new Nehnutelnost();
 

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmestralnaPraca2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed">
+        Title="MainWindow" Height="450" Width="800" Closed="Window_Closed" >
     <Window.Resources>
         <Style TargetType="Label" x:Key="Label_Nadpis">
             <Setter Property="FontSize" Value="25" />
@@ -67,8 +67,8 @@
         </Grid.RowDefinitions>
         <Menu>
             <MenuItem Header="Súbor">
-                <MenuItem Header="Náčítaj súbor"/>
-                <MenuItem Header="Náčítaj ako nový súbor"/>
+                <MenuItem Header="Náčítaj súbor" Click="NacitajSubor_Click"/>
+                <MenuItem Header="Náčítaj ako nový súbor" Click="NacitajSuborNovy_Click"/>
                 <MenuItem Header="Vygeneruj údaje" Click="VygenerujUdaje_Click"/>
             </MenuItem>
 

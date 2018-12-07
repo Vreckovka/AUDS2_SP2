@@ -24,7 +24,7 @@ namespace DynamicHash_Tester
     /// </summary>
     public partial class MainWindow : Window
     {
-        static Random random = new Random(4);
+        static Random random = new Random(1);
         static Stopwatch stopwatch = new Stopwatch();
         private static List<Nehnutelnost> nehnutelnosts = new List<Nehnutelnost>();
         private static DynamicHash<Nehnutelnost> dynamicHash;
@@ -32,24 +32,35 @@ namespace DynamicHash_Tester
         public MainWindow()
         {
             InitializeComponent();
-            dynamicHash = new DynamicHash<Nehnutelnost>(3, 5, "Nehnutelnosti.bin");
+            dynamicHash = new DynamicHash<Nehnutelnost>(3, 5, "Nehnutelnosti.bin", true);
 
-            Test(10);
+            Test(1000);
             DrawBlocksSequentionally();
         }
 
         public static void Test(int count)
         {
-            for (int i = 0; i < count; i++)
+            int blockFaktor = random.Next(1, 32);
+            for (int i = 10; i < count; i++)
             {
                 Console.WriteLine($"TEST: {i}");
                 random = new Random(i);
-                RandomOperation(100);
+
+                RandomOperation(30);
+                dynamicHash.Save();
+                dynamicHash = new DynamicHash<Nehnutelnost>(3, blockFaktor, "Nehnutelnosti.bin", false);
+
+                RandomOperation(30);
+                dynamicHash.Save();
+                dynamicHash = new DynamicHash<Nehnutelnost>(3, blockFaktor, "Nehnutelnosti.bin", false);
+
                 SkontrolujeVsetkyPrvky();
+                dynamicHash.Save();
 
                 if (i != count - 1)
                 {
-                    dynamicHash.Clear();
+                    blockFaktor = random.Next(1, 32);
+                    dynamicHash = new DynamicHash<Nehnutelnost>(3, blockFaktor, "Nehnutelnosti.bin", true);
                     nehnutelnosts.Clear();
                     _pocet = 0;
                 }
@@ -92,7 +103,6 @@ namespace DynamicHash_Tester
                 {
                     if (RandomDelete() == null)
                         throw new Exception("CHYBA");
-
                 }
             }
         }

@@ -178,6 +178,7 @@ namespace SmestralnaPraca2
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            coreMain.SaveFiles();
             sekvencnyVypis_WindowID?.Close();
             sekvencnyVypis_WindowRAC?.Close();
             sekvencnyVypis_WindowSUP?.Close();
@@ -189,6 +190,16 @@ namespace SmestralnaPraca2
             if (generatorWindow == null || !generatorWindow.IsLoaded)
                 generatorWindow = new GeneratorWindow(coreMain);
             generatorWindow.Show();
+        }
+
+        private void NacitajSubor_Click(object sender, RoutedEventArgs e)
+        {
+            coreMain.LoadFiles();
+        }
+
+        private void NacitajSuborNovy_Click(object sender, RoutedEventArgs e)
+        {
+            coreMain.CreateFiles();
         }
     }
 }

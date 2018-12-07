@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4054199A-7DC0-4CAB-9AC2-172503BA8BA6}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>SmestralnaPraca2</RootNamespace>
     <AssemblyName>SmestralnaPraca2</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>

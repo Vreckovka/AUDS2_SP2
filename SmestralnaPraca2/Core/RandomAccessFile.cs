@@ -17,31 +17,106 @@ namespace SmestralnaPraca2.Core
         private long lastOffset { get; set; }
         private FileStream fs;
         private int _sizeOfRecord;
-
+        private string _pathOfFIle;
 
         public RandomAccessFile(string pathOfFIle, bool createNew)
         {
             _freeBlocks = new SortedList<long>();
+            _sizeOfRecord = new T().GetSizeOfByteArray();
+            _pathOfFIle = pathOfFIle;
 
             if (createNew)
                 fs = new FileStream(pathOfFIle, FileMode.Create, FileAccess.ReadWrite);
             else
+            {
                 fs = new FileStream(pathOfFIle, FileMode.Open, FileAccess.ReadWrite);
-
-            _sizeOfRecord = new T().GetSizeOfByteArray();
+                Load();
+            }
         }
 
-        public Queue<KeyValuePair<T,long>> GetBlocksSequentionally()
+        public Queue<KeyValuePair<T, long>> GetBlocksSequentionally()
         {
-            Queue <KeyValuePair<T, long> > queue = new Queue<KeyValuePair<T,long>> ();
+            Queue<KeyValuePair<T, long>> queue = new Queue<KeyValuePair<T, long>>();
 
             for (int i = 0; i < fs.Length; i += _sizeOfRecord)
             {
                 T data = ReadDataFromFile(i);
-                queue.Enqueue(new KeyValuePair<T, long>(data,i));
+                queue.Enqueue(new KeyValuePair<T, long>(data, i));
             }
 
             return queue;
+        }
+
+        public void Save()
+        {
+            WriteControlBlock();
+            fs.Flush();
+            fs.Close();
+        }
+
+        public void Load()
+        {
+            ReadControlBlock();
+        }
+        private void ReadControlBlock()
+        {
+            string name = Path.GetFileName(_pathOfFIle).Replace(".bin", string.Empty);
+            StreamReader fileStream = new StreamReader(name + "_Data.txt");
+            Count = Convert.ToInt32(fileStream.ReadLine());
+            lastOffset = Convert.ToInt64(fileStream.ReadLine());
+
+            var _freeBlocksArray = fileStream.ReadLine()?.Split(';');
+
+            if (_freeBlocksArray != null)
+            {
+                foreach (string offset in _freeBlocksArray)
+                {
+                    if (offset != "")
+                        _freeBlocks.Add(Convert.ToInt64(offset));
+                }
+            }
+
+            fileStream.Close();
+        }
+
+        public void Delete(long offset)
+        {
+            if (offset != lastOffset - _sizeOfRecord)
+                _freeBlocks.Add(offset);
+            else
+                DeleteLastBlock();
+        }
+
+        public void DeleteLastBlock()
+        {
+            long sizeToCut = _sizeOfRecord;
+            lastOffset -= _sizeOfRecord;
+            while (_freeBlocks.Count > 0 && _freeBlocks.Last == lastOffset - _sizeOfRecord)
+            {
+                sizeToCut += _sizeOfRecord;
+                _freeBlocks.Cut();
+                lastOffset -= _sizeOfRecord;
+            }
+
+
+            fs.SetLength(fs.Length - sizeToCut);
+
+        }
+
+        private void WriteControlBlock()
+        {
+            string name = Path.GetFileName(_pathOfFIle).Replace(".bin", string.Empty);
+            StreamWriter fileStream = new StreamWriter(name + "_Data.txt");
+            fileStream.WriteLine(Count);
+            fileStream.WriteLine(lastOffset);
+            foreach (long offset in _freeBlocks._records)
+            {
+                fileStream.Write(offset + ";");
+            }
+
+            fileStream.Flush();
+            fileStream.Close();
+
         }
 
         public long Add(T data)

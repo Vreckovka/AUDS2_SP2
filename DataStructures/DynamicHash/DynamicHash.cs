@@ -18,18 +18,67 @@ namespace DataStructures.DynamicHash
         public SortedList<long> _freeBlocks;
         public int Count { get; set; }
         private int sizeOfHash;
-        public DynamicHash(int blockCount, int sizeOfHash, string pathOfFile)
+        private string _pathOfFile;
+        public DynamicHash(int blockCount, int sizeOfHash, string pathOfFile, bool createNew)
         {
             _blockCount = blockCount;
             _sizeOfRecord = new T().GetSizeOfByteArray();
-            fs = new FileStream(pathOfFile, FileMode.Create, FileAccess.ReadWrite);
-            _root = new TrieExternNode(0, 0, null, false);
             _blockSize = (blockCount * _sizeOfRecord) + Block<T>.HeadSize;
-            WriteBlockOnDisk(new Block<T>(0));
-            _freeBlocks = new SortedList<long>();
             this.sizeOfHash = sizeOfHash;
+            _pathOfFile = pathOfFile;
+            _freeBlocks = new SortedList<long>();
+
+            if (createNew)
+            {
+                fs = new FileStream(pathOfFile, FileMode.Create, FileAccess.ReadWrite);
+                _root = new TrieExternNode(0, 0, null, false);
+                WriteBlockOnDisk(new Block<T>(0));
+
+            }
+            else
+            {
+                fs = new FileStream(pathOfFile, FileMode.Open, FileAccess.ReadWrite);
+                ReadControlBlock();
+                LoadTrie();
+            }
         }
 
+        private void ReadControlBlock()
+        {
+            string name = Path.GetFileName(_pathOfFile).Replace(".bin", string.Empty);
+            StreamReader fileStream = new StreamReader(name + "_Data.txt");
+            Count = Convert.ToInt32(fileStream.ReadLine());
+            _lastOffset = Convert.ToInt64(fileStream.ReadLine());
+
+            var _freeBlocksArray = fileStream.ReadLine()?.Split(';');
+
+            if (_freeBlocksArray != null)
+            {
+                foreach (string offset in _freeBlocksArray)
+                {
+                    if (offset != "")
+                        _freeBlocks.Add(Convert.ToInt64(offset));
+                }
+            }
+
+            fileStream.Close();
+        }
+
+        private void WriteControlBlock()
+        {
+            string name = Path.GetFileName(_pathOfFile).Replace(".bin", string.Empty);
+            StreamWriter fileStream = new StreamWriter(name + "_Data.txt");
+            fileStream.WriteLine(Count);
+            fileStream.WriteLine(_lastOffset);
+            foreach (long offset in _freeBlocks._records)
+            {
+                fileStream.Write(offset + ";");
+            }
+
+            fileStream.Flush();
+            fileStream.Close();
+
+        }
 
         private void WriteBlockOnDisk(Block<T> block)
         {
@@ -508,7 +557,7 @@ namespace DataStructures.DynamicHash
             else
                 current = _root as TrieExternNode;
 
-            if (((TrieExternNode) current).BlockOffset == -1)
+            if (((TrieExternNode)current).BlockOffset == -1)
                 return default(T);
 
             var foundBlock = ReadBlockFromDisk(((TrieExternNode)current).BlockOffset);
@@ -518,7 +567,7 @@ namespace DataStructures.DynamicHash
 
             for (i = 0; i < sizeOfChain + 1; i++)
             {
-                found = foundBlock.Find(key,ref index);
+                found = foundBlock.Find(key, ref index);
                 if (found != null)
                     break;
                 if (foundBlock.NextOffset != -1)
@@ -929,6 +978,161 @@ namespace DataStructures.DynamicHash
                     nodeStack.Push(((TrieInternNode)curr).Left);
 
             }
+        }
+
+        public void Save()
+        {
+            WriteControlBlock();
+            SaveTrie();
+            fs.Close();
+        }
+        private void SaveTrie()
+        {
+
+            string name = Path.GetFileName(_pathOfFile).Replace(".bin", string.Empty);
+            StreamWriter fileStream = new StreamWriter(name + "_Trie.txt");
+            Queue<string> queue = new Queue<string>();
+            Queue<Node> list = new Queue<Node>();
+
+            Node curr = _root;
+
+            if (_root == null)
+                return;
+
+            if (!(_root is TrieInternNode))
+                queue.Enqueue(_root.SaveNode());
+            else
+            {
+                queue.Enqueue("Root");
+                do
+                {
+                    int pocet = list.Count + 1;
+                    for (int i = 0; i < pocet; i++)
+                    {
+                        curr = curr as TrieInternNode;
+                        if (curr != null)
+                        {
+                            if (((TrieInternNode)curr).Left != null)
+                            {
+                                if (((TrieInternNode)curr).Left is TrieInternNode)
+                                {
+                                    queue.Enqueue("L");
+                                }
+                                else
+                                    queue.Enqueue(((TrieInternNode)curr).Left.SaveNode());
+
+                                list.Enqueue(((TrieInternNode)curr).Left);
+                            }
+
+                            if (((TrieInternNode)curr).Right != null)
+                            {
+
+                                if (((TrieInternNode)curr).Right is TrieInternNode)
+                                {
+                                    queue.Enqueue("R");
+                                }
+                                else
+                                    queue.Enqueue(((TrieInternNode)curr).Right.SaveNode());
+
+                                list.Enqueue(((TrieInternNode)curr).Right);
+                            }
+                        }
+
+                        if (list.Count != 0)
+                            curr = list.Dequeue();
+                        else
+                            break;
+
+                    }
+                } while (list.Count != 0);
+            }
+
+            foreach (string node in queue)
+            {
+
+                fileStream.Write(node + "|");
+            }
+
+            if (_root is TrieInternNode)
+            {
+                ((TrieInternNode)_root).Left.Parent = null;
+                ((TrieInternNode)_root).Right.Parent = null;
+                _root = null;
+            }
+
+
+            fs.Flush();
+            fs.Close();
+            fileStream.Flush();
+            fileStream.Close();
+        }
+
+        private void LoadTrie()
+        {
+            string name = Path.GetFileName(_pathOfFile).Replace(".bin",string.Empty);
+            StreamReader fileStream = new StreamReader(name + "_Trie.txt");
+            var line = fileStream.ReadLine();
+            var nodes = line.Split('|');
+
+            TrieInternNode current = null;
+            Queue<TrieInternNode> queue = new Queue<TrieInternNode>();
+            Queue<string> nodeString = new Queue<string>(nodes);
+
+            //Ak je root Intern
+            if (nodeString.Peek() == "Root")
+            {
+                nodeString.Dequeue();
+                _root = new TrieInternNode();
+                queue.Enqueue((TrieInternNode)_root);
+            }
+            else
+            {
+                var nodeData = nodeString.Dequeue().Split(';');
+                _root = new TrieExternNode(Convert.ToInt64(nodeData[0]),
+                    Convert.ToInt32(nodeData[1]), current, false);
+            }
+
+            while (queue.Count > 0)
+            {
+                current = queue.Dequeue();
+                var nodeS = nodeString.Dequeue();
+
+                if (nodeS == "L")
+                {
+                    TrieInternNode left = new TrieInternNode();
+                    current.Left = left;
+                    left.Parent = current;
+                    queue.Enqueue(left);
+                }
+                else
+                {
+                    var nodeData = nodeS.Split(';');
+                    TrieExternNode left = new TrieExternNode(Convert.ToInt64(nodeData[0]),
+                        Convert.ToInt32(nodeData[1]), current, true);
+                    current.Left = left;
+                    left.Parent = current;
+                }
+
+                nodeS = nodeString.Dequeue();
+                if (nodeS == "R")
+                {
+                    TrieInternNode right = new TrieInternNode();
+                    current.Right = right;
+                    right.Parent = current;
+                    queue.Enqueue(right);
+                }
+                else
+                {
+                    var nodeData = nodeS.Split(';');
+                    TrieExternNode right = new TrieExternNode(Convert.ToInt64(nodeData[0]),
+                        Convert.ToInt32(nodeData[1]), current, false);
+                    current.Right = right;
+                    right.Parent = current;
+
+                }
+            }
+
+            fileStream.Close();
         }
     }
 }
