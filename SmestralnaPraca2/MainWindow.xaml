@@ -69,7 +69,7 @@
             <MenuItem Header="Súbor">
                 <MenuItem Header="Náčítaj súbor"/>
                 <MenuItem Header="Náčítaj ako nový súbor"/>
-                <MenuItem Header="Vygeneruj údaje"/>
+                <MenuItem Header="Vygeneruj údaje" Click="VygenerujUdaje_Click"/>
             </MenuItem>
 
             <MenuItem Header="Sekvenčný výpis">

@@ -7,7 +7,7 @@ using DataStructures.DynamicHash;
 
 namespace SmestralnaPraca2.Core
 {
-    class Nehnutelnost : IByteRecord
+    public class Nehnutelnost : IByteRecord
     {
         public int SupisneCislo { get; set; }
         public string NazovKatastra { get; set; }

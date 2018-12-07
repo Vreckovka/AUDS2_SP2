@@ -8,7 +8,7 @@ using DataStructures.DynamicHash;
 
 namespace SmestralnaPraca2.Core
 {
-    class CoreMain
+    public class CoreMain
     {
         internal RandomAccessFile<Nehnutelnost> randomAccessFile;
         internal DynamicHash<NehnutelnostID> dynamicHashId;
@@ -19,9 +19,6 @@ namespace SmestralnaPraca2.Core
             randomAccessFile = new RandomAccessFile<Nehnutelnost>("../../Files/data.bin", true);
             dynamicHashId = new DynamicHash<NehnutelnostID>(3, 32,"../../Files/nehnutelnostiID.bin");
             dynamicHashSup = new DynamicHash<NehnutelnostSupisneCislo>(3, 32,"../../Files/nehnutelnostiSupCislo.bin");
-
-            Generator generator = new Generator(this);
-            generator.AddNehnutelnosti(10, 10);
         }
 
         public string[] FindNehnutelnost(int id)

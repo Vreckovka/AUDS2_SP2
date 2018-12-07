@@ -26,6 +26,7 @@ namespace SmestralnaPraca2
         private SekvencnyVypis_Window sekvencnyVypis_WindowRAC;
         private SekvencnyVypis_Window sekvencnyVypis_WindowID;
         private SekvencnyVypis_Window sekvencnyVypis_WindowSUP;
+        private GeneratorWindow generatorWindow;
         string[] VyhladanaNehnutelnost;
         public MainWindow()
         {
@@ -180,6 +181,14 @@ namespace SmestralnaPraca2
             sekvencnyVypis_WindowID?.Close();
             sekvencnyVypis_WindowRAC?.Close();
             sekvencnyVypis_WindowSUP?.Close();
+            generatorWindow?.Close();
+        }
+
+        private void VygenerujUdaje_Click(object sender, RoutedEventArgs e)
+        {
+            if (generatorWindow == null || !generatorWindow.IsLoaded)
+                generatorWindow = new GeneratorWindow(coreMain);
+            generatorWindow.Show();
         }
     }
 }
